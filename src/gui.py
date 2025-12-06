@@ -29,10 +29,11 @@ except ImportError:
 
 # Import text chunker module
 try:
-    from text_chunker import process_text_in_chunks, DEFAULT_MAX_CHUNK_SIZE
+    from text_chunker import process_text_in_chunks, split_into_paragraphs, DEFAULT_MAX_CHUNK_SIZE
 except ImportError:
     print("Warning: text_chunker module not found. Large text processing may fail.")
     process_text_in_chunks = None
+    split_into_paragraphs = None
     # Fallback value matches the default in text_chunker.py
     DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
 
@@ -293,13 +294,14 @@ class NERDemoGUI:
             self.status_var.set("Processing text...")
             self.root.update()
             
-            # Check if text is large and needs chunking
+            # Check if text has multiple paragraphs (chunking improves NER with paragraph context)
             text_length = len(text)
-            needs_chunking = text_length > DEFAULT_MAX_CHUNK_SIZE
+            paragraphs = split_into_paragraphs(text) if split_into_paragraphs is not None else []
+            has_multiple_paragraphs = len(paragraphs) > 1
             
-            if needs_chunking and process_text_in_chunks is not None:
-                # Use chunking for large texts
-                self.status_var.set(f"Processing large text ({text_length:,} chars) in chunks...")
+            if has_multiple_paragraphs and process_text_in_chunks is not None:
+                # Use chunking for multi-paragraph texts
+                self.status_var.set(f"Processing text ({text_length:,} chars, {len(paragraphs)} paragraphs) in chunks...")
                 self.root.update()
                 
                 # Save output file path
@@ -341,20 +343,20 @@ class NERDemoGUI:
                     self.results_text.insert(tk.END, "No entities found.\n")
                 
                 self.results_text.insert(tk.END, f"\n\nTotal entities: {len(all_entities)}\n")
-                self.results_text.insert(tk.END, f"Text was chunked for processing due to size.\n")
+                self.results_text.insert(tk.END, f"Text was chunked for better paragraph context.\n")
                 
                 self.last_output_file = output_file
                 self.status_var.set(f"Processing complete. Output saved to: {output_file.name}")
                 
                 messagebox.showinfo(
                     "Processing Complete",
-                    f"Found {len(all_entities)} entities in {text_length:,} characters.\n\n"
-                    f"Text was processed in chunks to handle large size.\n\n"
+                    f"Found {len(all_entities)} entities in {text_length:,} characters ({len(paragraphs)} paragraphs).\n\n"
+                    f"Text was processed in chunks for better context.\n\n"
                     f"HTML visualization saved to:\n{output_file.name}\n\n"
                     "Click 'View Last Output' to open in browser."
                 )
             else:
-                # Process text normally (single chunk)
+                # Process text normally (single paragraph or no chunking available)
                 doc = self.nlp(text)
                 
                 # Display entities in results

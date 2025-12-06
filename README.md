@@ -178,15 +178,16 @@ The application will:
 - Generate an HTML visualization with highlighted entities
 - Save the output to `data/outputs/ner_output_YYYYMMDD_HHMMSS.html`
 
-### Large Text Processing
+### Text Processing with Paragraph Chunking
 
-The application automatically handles large texts (>100,000 characters) by:
-- **Smart Chunking**: Splitting text on paragraph boundaries to preserve logical structure
-- **Automatic Processing**: Each chunk is processed separately with spaCy NER
+The application automatically uses chunking for any text with multiple paragraphs:
+- **Smart Chunking**: Splitting text on paragraph boundaries to preserve logical structure and improve NER accuracy
+- **Automatic Processing**: Each paragraph chunk is processed separately with spaCy NER
 - **Merged Output**: All chunks are combined into a single HTML visualization
 - **Visual Separation**: Section breaks are added between chunks in the output
+- **Better Context**: Processing text by paragraphs helps spaCy maintain clearer context boundaries for entity recognition
 
-This ensures that even very large documents can be processed without exceeding spaCy's document length limits, while maintaining the readability and structure of the original text.
+Single-paragraph texts are processed normally without chunking overhead. This approach ensures optimal NER performance while maintaining the readability and structure of the original text.
 
 ## Output Format
 
