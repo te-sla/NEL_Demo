@@ -19,7 +19,9 @@ from text_chunker import (
     chunk_text,
     merge_html_outputs,
     process_text_in_chunks,
-    DEFAULT_MAX_CHUNK_SIZE
+    transliterate_to_latin,
+    DEFAULT_MAX_CHUNK_SIZE,
+    CYRTRANSLIT_AVAILABLE
 )
 
 
@@ -278,6 +280,74 @@ class TestEdgeCases:
         assert len(result) == 2
         assert "@#$%^&*()" in result[0]
         assert "<html>" in result[1]
+
+
+class TestTransliteration:
+    """Test suite for Cyrillic to Latin transliteration functionality."""
+    
+    @pytest.mark.skipif(not CYRTRANSLIT_AVAILABLE, reason="cyrtranslit not installed")
+    def test_cyrillic_to_latin(self):
+        """Test basic Cyrillic to Latin transliteration."""
+        cyrillic_text = "Београд"
+        result = transliterate_to_latin(cyrillic_text, 'sr')
+        assert result == "Beograd"
+    
+    @pytest.mark.skipif(not CYRTRANSLIT_AVAILABLE, reason="cyrtranslit not installed")
+    def test_already_latin_unchanged(self):
+        """Test that Latin text remains unchanged."""
+        latin_text = "Beograd"
+        result = transliterate_to_latin(latin_text, 'sr')
+        assert result == "Beograd"
+    
+    @pytest.mark.skipif(not CYRTRANSLIT_AVAILABLE, reason="cyrtranslit not installed")
+    def test_mixed_cyrillic_latin(self):
+        """Test mixed Cyrillic and Latin text."""
+        mixed_text = "Novak Ђоковић"
+        result = transliterate_to_latin(mixed_text, 'sr')
+        # Latin part should remain, Cyrillic should be transliterated
+        assert "Novak" in result
+        assert "Đoković" in result
+    
+    @pytest.mark.skipif(not CYRTRANSLIT_AVAILABLE, reason="cyrtranslit not installed")
+    def test_serbian_sentence(self):
+        """Test full Serbian sentence transliteration."""
+        cyrillic_text = "Народна банка Србије је централна банка."
+        result = transliterate_to_latin(cyrillic_text, 'sr')
+        expected = "Narodna banka Srbije je centralna banka."
+        assert result == expected
+    
+    @pytest.mark.skipif(not CYRTRANSLIT_AVAILABLE, reason="cyrtranslit not installed")
+    def test_special_serbian_characters(self):
+        """Test special Serbian Cyrillic characters."""
+        # Test characters unique to Serbian Cyrillic
+        cyrillic_text = "Ђ, ђ, Ж, ж, Љ, љ, Њ, њ, Ћ, ћ, Џ, џ, Ш, ш, Ч, ч"
+        result = transliterate_to_latin(cyrillic_text, 'sr')
+        # Check that special characters are properly transliterated
+        assert "Đ" in result or "Dj" in result
+        assert "ž" in result or "zh" in result
+    
+    @pytest.mark.skipif(not CYRTRANSLIT_AVAILABLE, reason="cyrtranslit not installed")
+    def test_empty_text(self):
+        """Test transliteration with empty text."""
+        result = transliterate_to_latin("", 'sr')
+        assert result == ""
+    
+    @pytest.mark.skipif(not CYRTRANSLIT_AVAILABLE, reason="cyrtranslit not installed")
+    def test_numbers_and_punctuation_unchanged(self):
+        """Test that numbers and punctuation remain unchanged."""
+        text = "Број 123, датум: 2024."
+        result = transliterate_to_latin(text, 'sr')
+        # Numbers should be preserved
+        assert "123" in result
+        assert "2024" in result
+    
+    def test_transliterate_without_module_raises_error(self):
+        """Test that transliteration raises error when module not available."""
+        if CYRTRANSLIT_AVAILABLE:
+            pytest.skip("cyrtranslit is installed, can't test error case")
+        
+        with pytest.raises(ImportError, match="cyrtranslit is required"):
+            transliterate_to_latin("test", 'sr')
 
 
 class TestIntegration:
