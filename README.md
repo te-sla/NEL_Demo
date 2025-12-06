@@ -1,5 +1,7 @@
 # NEL Demo - spaCy NER+NEL GUI
 
+**[🇷🇸 Srpska verzija / Serbian version](README.sr.md)**
+
 A simple demonstration application for Named Entity Recognition (NER) and Named Entity Linking (NEL) using spaCy models with a minimal GUI interface.
 
 ## Features
