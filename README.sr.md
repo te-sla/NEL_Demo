@@ -49,7 +49,7 @@ NEL_Demo/
 ### Windows (PowerShell)
 
 1. Otvorite PowerShell
-2. Navigirajte do direktorijuma projekta
+2. Pozicionirajte se u direktorijum projekta (cd komanda)
 3. Pokrenite instaler:
 
 ```powershell
@@ -59,7 +59,7 @@ NEL_Demo/
 ### Linux/Mac (Bash)
 
 1. Otvorite terminal
-2. Navigirajte do direktorijuma projekta
+2. Pozicionirajte se u direktorijum projekta  
 3. Pokrenite instaler:
 
 ```bash
@@ -74,8 +74,8 @@ Instaler će:
 3. ✅ Aktivirati virtuelno okruženje
 4. ✅ Ažurirati pip na najnoviju verziju
 5. ✅ Pitati vas da izaberete između:
-   - Standardni spaCy (brži, manji)
-   - spacy-transformers (precizniji, veći)
+   - Standardnog spaCy (brži, manji)
+   - spacy-transformera (precizniji, veći)
 6. ✅ Instalirati sve potrebne zavisnosti
 
 ## Podešavanje modela
