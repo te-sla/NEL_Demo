@@ -96,9 +96,11 @@ class NERDemoGUI:
         self.model_name = None
         self.output_dir = PROJECT_ROOT / "data" / "outputs"
         self.models_dir = PROJECT_ROOT / "models"
+        self.inputs_dir = PROJECT_ROOT / "inputs"
         
-        # Ensure output directory exists
+        # Ensure output and inputs directories exist
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.inputs_dir.mkdir(parents=True, exist_ok=True)
         
         self.create_widgets()
         self.check_models()
@@ -206,6 +208,12 @@ class NERDemoGUI:
             sample_frame,
             text="Load Sample Text",
             command=self.load_sample_text
+        ).pack(side=tk.LEFT, padx=5)
+        
+        ttk.Button(
+            sample_frame,
+            text="Load from File",
+            command=self.load_text_from_file
         ).pack(side=tk.LEFT, padx=5)
         
         ttk.Button(
@@ -361,6 +369,39 @@ class NERDemoGUI:
         self.input_text.delete(1.0, tk.END)
         self.input_text.insert(1.0, sample_text)
         self.status_var.set("Sample text loaded")
+    
+    def load_text_from_file(self):
+        """Load text from a file using file dialog."""
+        # Open file dialog starting in the inputs directory
+        file_path = filedialog.askopenfilename(
+            title="Select Text File",
+            initialdir=self.inputs_dir,
+            filetypes=[
+                ("Text Files", "*.txt"),
+                ("All Files", "*.*")
+            ]
+        )
+        
+        if file_path:
+            try:
+                # Read the file
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    text = f.read()
+                
+                # Load into text area
+                self.input_text.delete(1.0, tk.END)
+                self.input_text.insert(1.0, text)
+                
+                # Update status
+                file_name = Path(file_path).name
+                self.status_var.set(f"Loaded file: {file_name}")
+                
+            except Exception as e:
+                messagebox.showerror(
+                    "Error Loading File",
+                    f"Failed to load file:\n{str(e)}"
+                )
+                self.status_var.set("Error loading file")
     
     def process_text(self):
         """Process the input text and display NER results."""
