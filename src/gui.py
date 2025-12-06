@@ -157,7 +157,6 @@ class NERDemoGUI:
         jerteh_link.bind("<Button-1>", lambda e: webbrowser.open(JERTEH_URL))
         ToolTip(jerteh_link, "Language Resources and Technologies Society - Jerteh\nClick to visit: https://jerteh.rs/")
 
-        
         # Model selection frame
         model_frame = ttk.LabelFrame(self.root, text="Model Selection", padding=10)
         model_frame.pack(fill=tk.X, padx=10, pady=5)
