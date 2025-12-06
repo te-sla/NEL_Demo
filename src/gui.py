@@ -390,7 +390,7 @@ class NERDemoGUI:
                     with open(file_path, 'r', encoding='utf-8') as f:
                         text = f.read()
                 except UnicodeDecodeError:
-                    # Fallback to system default encoding if UTF-8 fails
+                    # Fallback to latin-1 encoding if UTF-8 fails (latin-1 accepts all bytes)
                     with open(file_path, 'r', encoding='latin-1') as f:
                         text = f.read()
                 
