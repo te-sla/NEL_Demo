@@ -10,29 +10,12 @@ import sys
 from pathlib import Path
 
 import pytest
-import spacy
 
 # Add src directory to path
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from text_chunker import DEFAULT_MAX_CHUNK_SIZE, chunk_text, process_text_in_chunks
-
-
-def _build_rule_based_nlp():
-    """Create a lightweight spaCy pipeline that still produces entities."""
-
-    nlp = spacy.blank("en")
-    ruler = nlp.add_pipe("entity_ruler")
-    ruler.add_patterns(
-        [
-            {"label": "ORG", "pattern": "Apple"},
-            {"label": "GPE", "pattern": "Cupertino"},
-            {"label": "ORG", "pattern": "Microsoft"},
-            {"label": "PERSON", "pattern": "Tim Cook"},
-        ]
-    )
-    return nlp
 
 
 def create_large_sample_text(repetitions: int = 30) -> str:
@@ -51,10 +34,10 @@ Satya Nadella currently serves as the CEO. Microsoft is famous for Windows, Offi
     return large_text
 
 
-def test_with_rule_based_model(tmp_path):
+def test_with_rule_based_model(rule_based_nlp, tmp_path):
     """Test using a rule-based spaCy pipeline to avoid external model downloads."""
 
-    nlp = _build_rule_based_nlp()
+    nlp = rule_based_nlp
     text = create_large_sample_text()
     chunk_size = 5000
 
@@ -72,10 +55,10 @@ def test_with_rule_based_model(tmp_path):
     assert "Document Section Break" in html
 
 
-def test_small_text(tmp_path):
+def test_small_text(rule_based_nlp, tmp_path):
     """Test with small text that doesn't need chunking."""
 
-    nlp = _build_rule_based_nlp()
+    nlp = rule_based_nlp
     text = """Apple Inc. is headquartered in Cupertino, California.
 Tim Cook is the CEO."""
 

@@ -10,7 +10,6 @@ import sys
 from pathlib import Path
 
 import pytest
-import spacy
 
 # Add src directory to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -23,22 +22,6 @@ from text_chunker import (
     process_text_in_chunks,
     split_into_paragraphs,
 )
-
-
-def _build_rule_based_nlp():
-    """Create a lightweight spaCy pipeline with deterministic entities."""
-
-    nlp = spacy.blank("en")
-    ruler = nlp.add_pipe("entity_ruler")
-    ruler.add_patterns(
-        [
-            {"label": "ORG", "pattern": "Apple"},
-            {"label": "GPE", "pattern": "Cupertino"},
-            {"label": "ORG", "pattern": "Microsoft"},
-            {"label": "PERSON", "pattern": "Tim Cook"},
-        ]
-    )
-    return nlp
 
 
 class TestSplitIntoParagraphs:
@@ -240,10 +223,10 @@ class TestProcessTextInChunks:
         with pytest.raises(ValueError, match="text cannot be empty"):
             process_text_in_chunks(DummyNLP(), "   \n\n   ")
     
-    def test_small_text_processing(self, tmp_path):
+    def test_small_text_processing(self, rule_based_nlp, tmp_path):
         """Process small text and ensure entities are preserved."""
 
-        nlp = _build_rule_based_nlp()
+        nlp = rule_based_nlp
         text = "Apple is headquartered in Cupertino. Tim Cook leads the company."
         output_path = tmp_path / "small_text.html"
 
@@ -256,10 +239,10 @@ class TestProcessTextInChunks:
         assert "Apple" in html and "Cupertino" in html
         assert output_path.exists()
 
-    def test_large_text_chunking(self, tmp_path):
+    def test_large_text_chunking(self, rule_based_nlp, tmp_path):
         """Process large text and confirm multiple chunks and HTML separators."""
 
-        nlp = _build_rule_based_nlp()
+        nlp = rule_based_nlp
         paragraph = "Apple is headquartered in Cupertino. Microsoft has offices worldwide. "
         text = "\n\n".join([paragraph] * 30)
         output_path = tmp_path / "large_text.html"
@@ -273,10 +256,10 @@ class TestProcessTextInChunks:
         assert "Document Section Break" in html
         assert output_path.exists()
 
-    def test_progress_callback_invoked(self):
+    def test_progress_callback_invoked(self, rule_based_nlp):
         """Ensure progress callback receives chunk progress updates."""
 
-        nlp = _build_rule_based_nlp()
+        nlp = rule_based_nlp
         text = "\n\n".join(["Apple is in Cupertino." for _ in range(10)])
 
         progress_updates = []
