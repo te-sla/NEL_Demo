@@ -37,11 +37,47 @@ except ImportError:
     # Fallback value matches the default in text_chunker.py
     DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
 
-# Attribution text and URLs
-ATTRIBUTION_TEXT = ("Made by TESLA - Text Embeddings - Serbian Language Applications\n"
-                    "and Language Resources and Technologies Society - Jerteh")
+# Attribution URLs
 TESLA_URL = "https://tesla.rgf.bg.ac.rs/"
 JERTEH_URL = "https://jerteh.rs/"
+
+
+class ToolTip:
+    """Simple tooltip widget for tkinter labels."""
+    
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tooltip_window = None
+        self.widget.bind("<Enter>", self.show_tooltip)
+        self.widget.bind("<Leave>", self.hide_tooltip)
+    
+    def show_tooltip(self, event=None):
+        if self.tooltip_window or not self.text:
+            return
+        x, y, _, _ = self.widget.bbox("insert")
+        x += self.widget.winfo_rootx() + 25
+        y += self.widget.winfo_rooty() + 20
+        
+        self.tooltip_window = tw = tk.Toplevel(self.widget)
+        tw.wm_overrideredirect(True)
+        tw.wm_geometry(f"+{x}+{y}")
+        
+        label = tk.Label(
+            tw, 
+            text=self.text, 
+            justify=tk.LEFT,
+            background="#ffffe0", 
+            relief=tk.SOLID, 
+            borderwidth=1,
+            font=("Arial", 9)
+        )
+        label.pack()
+    
+    def hide_tooltip(self, event=None):
+        if self.tooltip_window:
+            self.tooltip_window.destroy()
+            self.tooltip_window = None
 
 
 class NERDemoGUI:
@@ -100,6 +136,7 @@ class NERDemoGUI:
         )
         tesla_link.pack(side=tk.LEFT)
         tesla_link.bind("<Button-1>", lambda e: webbrowser.open(TESLA_URL))
+        ToolTip(tesla_link, "TESLA - Text Embeddings - Serbian Language Applications\nClick to visit: https://tesla.rgf.bg.ac.rs/")
         
         and_label = tk.Label(
             attribution_frame,
@@ -118,6 +155,7 @@ class NERDemoGUI:
         )
         jerteh_link.pack(side=tk.LEFT)
         jerteh_link.bind("<Button-1>", lambda e: webbrowser.open(JERTEH_URL))
+        ToolTip(jerteh_link, "Language Resources and Technologies Society - Jerteh\nClick to visit: https://jerteh.rs/")
 
         
         # Model selection frame
