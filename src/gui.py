@@ -73,6 +73,15 @@ class NERDemoGUI:
         )
         title_label.pack()
         
+        # Attribution
+        attribution_label = tk.Label(
+            self.root,
+            text="Made by TESLA - Text Embeddings - Serbian Language Applications\nand Language Resources and Technologies Society - Jerteh",
+            font=("Arial", 9),
+            fg="gray"
+        )
+        attribution_label.pack()
+        
         # Model selection frame
         model_frame = ttk.LabelFrame(self.root, text="Model Selection", padding=10)
         model_frame.pack(fill=tk.X, padx=10, pady=5)

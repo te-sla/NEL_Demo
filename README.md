@@ -310,6 +310,10 @@ For issues or questions:
 - Visualization powered by [displaCy](https://spacy.io/usage/visualizers)
 - GUI built with Python's tkinter
 
+Made by:
+- **TESLA** - Text Embeddings - Serbian Language Applications
+- **Language Resources and Technologies Society - Jerteh**
+
 ---
 
 **Happy Entity Recognition! 🎯**
