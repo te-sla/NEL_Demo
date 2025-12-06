@@ -314,7 +314,7 @@ class NERDemoGUI:
                 output_file = self.output_dir / f"ner_output_{timestamp}.html"
                 
                 # Process text in chunks
-                all_entities, html = process_text_in_chunks(
+                all_entities, html, num_chunks = process_text_in_chunks(
                     self.nlp, 
                     text, 
                     max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
@@ -348,15 +348,15 @@ class NERDemoGUI:
                     self.results_text.insert(tk.END, "No entities found.\n")
                 
                 self.results_text.insert(tk.END, f"\n\nTotal entities: {len(all_entities)}\n")
-                self.results_text.insert(tk.END, f"Text was chunked into {len(paragraphs)} paragraph(s) for better context.\n")
+                self.results_text.insert(tk.END, f"Text was split into {num_chunks} chunk(s) from {len(paragraphs)} paragraph(s) for better context.\n")
                 
                 self.last_output_file = output_file
                 self.status_var.set(f"Processing complete. Output saved to: {output_file.name}")
                 
                 messagebox.showinfo(
                     "Processing Complete",
-                    f"Found {len(all_entities)} entities in {text_length:,} characters ({len(paragraphs)} paragraphs).\n\n"
-                    f"Text was processed in chunks for better context.\n\n"
+                    f"Found {len(all_entities)} entities in {text_length:,} characters.\n\n"
+                    f"Processed as {num_chunks} chunk(s) from {len(paragraphs)} paragraph(s) for better context.\n\n"
                     f"HTML visualization saved to:\n{output_file.name}\n\n"
                     "Click 'View Last Output' to open in browser."
                 )

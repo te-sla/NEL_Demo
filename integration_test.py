@@ -78,7 +78,7 @@ def test_with_blank_model():
     output_file = output_dir / "integration_test_output.html"
     
     try:
-        entities, html = process_text_in_chunks(
+        entities, html, num_chunks = process_text_in_chunks(
             nlp, 
             text, 
             max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
@@ -87,6 +87,7 @@ def test_with_blank_model():
         
         print(f"✓ Processing complete!")
         print(f"  Total entities found: {len(entities)}")
+        print(f"  Number of chunks created: {num_chunks}")
         print(f"  HTML output saved to: {output_file}")
         print(f"  HTML size: {len(html):,} characters")
         
@@ -119,9 +120,10 @@ Tim Cook is the CEO. The company was founded by Steve Jobs in 1976."""
     print(f"\nProcessing small text ({len(text)} chars)...")
     
     try:
-        entities, html = process_text_in_chunks(nlp, text)
+        entities, html, num_chunks = process_text_in_chunks(nlp, text)
         print(f"✓ Processing complete!")
         print(f"  Total entities found: {len(entities)}")
+        print(f"  Number of chunks created: {num_chunks}")
         print(f"  HTML size: {len(html):,} characters")
         return True
     except Exception as e:

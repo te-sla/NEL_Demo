@@ -293,11 +293,11 @@ class TestIntegration:
         assert len(chunks) > 1
         
         # Create mock HTML outputs
-        html_template = (
-            '<html><head><style>.entities {}</style></head>'
-            '<body><div class="entities">Chunk {}</div></body></html>'
-        )
-        html_chunks = [html_template.format('{}', i) for i in range(len(chunks))]
+        html_chunks = [
+            f'<html><head><style>.entities {{}}</style></head>'
+            f'<body><div class="entities">Chunk {i}</div></body></html>'
+            for i in range(len(chunks))
+        ]
         
         # Merge HTML
         merged = merge_html_outputs(html_chunks)

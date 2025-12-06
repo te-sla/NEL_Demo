@@ -181,7 +181,7 @@ The application will:
 ### Text Processing with Paragraph Chunking
 
 The application automatically uses chunking for any text with multiple paragraphs:
-- **Smart Chunking**: Paragraphs are grouped into appropriately-sized chunks (up to 100K chars each) to preserve logical structure and improve NER accuracy
+- **Smart Chunking**: Paragraphs are grouped into appropriately sized chunks (up to 100K chars each) to preserve logical structure and improve NER accuracy
 - **Automatic Processing**: Each chunk is processed separately with spaCy NER
 - **Merged Output**: All chunks are combined into a single HTML visualization
 - **Visual Separation**: Section breaks are added between chunks in the output

@@ -186,6 +186,10 @@ def merge_html_outputs(html_chunks: List[str], title: str = "NER Output") -> str
                                  'border-top: 2px solid #ddd; border-bottom: 2px solid #ddd; '
                                  'text-align: center; color: #666; font-style: italic;">'
                                  '--- Document Section Break ---</div>')
+        else:
+            # Log warning if chunk doesn't match expected pattern
+            import warnings
+            warnings.warn(f"Chunk {i+1} doesn't match expected HTML pattern and will be skipped")
     
     # Build the merged HTML
     merged_html = f"""<!DOCTYPE html>
@@ -211,7 +215,7 @@ def process_text_in_chunks(
     text: str,
     max_chunk_size: int = DEFAULT_MAX_CHUNK_SIZE,
     output_path: Optional[Path] = None
-) -> Tuple[List, str]:
+) -> Tuple[List, str, int]:
     """
     Process text in chunks using spaCy NLP pipeline and merge results.
     
@@ -229,9 +233,10 @@ def process_text_in_chunks(
         output_path: Optional path to save merged HTML output
         
     Returns:
-        Tuple of (all_entities, merged_html)
+        Tuple of (all_entities, merged_html, num_chunks)
         - all_entities: List of all entities found across all chunks
         - merged_html: Merged HTML visualization
+        - num_chunks: Number of chunks created
         
     Raises:
         ValueError: If nlp is None or text is empty
@@ -259,7 +264,7 @@ def process_text_in_chunks(
         all_entities.extend(doc.ents)
         
         # Generate HTML for this chunk
-        # Use page=False to get just the content without full HTML wrapper
+        # Use page=True to get the full HTML page (including wrapper)
         html = displacy.render(doc, style="ent", page=True)
         html_outputs.append(html)
     
@@ -272,4 +277,4 @@ def process_text_in_chunks(
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(merged_html)
     
-    return all_entities, merged_html
+    return all_entities, merged_html, len(chunks)
