@@ -613,6 +613,7 @@ class NERDemoGUI:
 def main() -> None:
     """Main entry point for the application."""
     root = tk.Tk()
+    # Create application instance - stored in root's children, no need to keep explicit reference
     NERDemoGUI(root)
     root.mainloop()
 

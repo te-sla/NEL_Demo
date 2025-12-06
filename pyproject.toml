@@ -47,12 +47,6 @@ Repository = "https://github.com/te-sla/NEL_Demo"
 "TESLA" = "https://tesla.rgf.bg.ac.rs/"
 "Jerteh" = "https://jerteh.rs/"
 
-[project.scripts]
-nel-demo = "gui:main"
-
-[tool.setuptools]
-packages = ["src"]
-
 [tool.pytest.ini_options]
 minversion = "7.0"
 testpaths = ["tests"]
