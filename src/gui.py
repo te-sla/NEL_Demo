@@ -21,11 +21,23 @@ from logging_utils import get_logger, setup_logging
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-import spacy
-from spacy import displacy
+try:
+    import spacy
+    from spacy import displacy
+except ImportError:
+    print("Error: spaCy is not installed.")
+    print("Please run the installer script (install.ps1 or install.sh) first.")
+    sys.exit(1)
 
 # Import text chunker module
-from text_chunker import process_text_in_chunks, split_into_paragraphs, DEFAULT_MAX_CHUNK_SIZE
+try:
+    from text_chunker import process_text_in_chunks, split_into_paragraphs, DEFAULT_MAX_CHUNK_SIZE
+except ImportError:
+    print("Warning: text_chunker module not found. Large text processing may fail.")
+    process_text_in_chunks = None
+    split_into_paragraphs = None
+    # Fallback value matches the default in text_chunker.py
+    DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
 
 
 setup_logging()
