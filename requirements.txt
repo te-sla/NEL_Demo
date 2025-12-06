@@ -1,0 +1,2 @@
+spacy>=3.7.0
+tkinter-tooltip>=2.0.0

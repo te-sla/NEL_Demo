@@ -1,0 +1,373 @@
+#!/usr/bin/env python3
+"""
+NEL Demo - spaCy NER+NEL GUI Application
+
+A simple GUI for demonstrating Named Entity Recognition (NER) and 
+Named Entity Linking (NEL) using spaCy models.
+"""
+
+import tkinter as tk
+from tkinter import ttk, scrolledtext, messagebox, filedialog
+import os
+import sys
+from pathlib import Path
+from datetime import datetime
+import webbrowser
+
+# Add the project root to the path
+PROJECT_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+try:
+    import spacy
+    from spacy import displacy
+except ImportError:
+    print("Error: spaCy is not installed.")
+    print("Please run the installer script (install.ps1 or install.sh) first.")
+    sys.exit(1)
+
+
+class NERDemoGUI:
+    """Main GUI application for NER+NEL demonstration."""
+    
+    def __init__(self, root):
+        """Initialize the GUI application.
+        
+        Args:
+            root: The root tkinter window
+        """
+        self.root = root
+        self.root.title("spaCy NER+NEL Demo")
+        self.root.geometry("900x700")
+        
+        self.nlp = None
+        self.model_name = None
+        self.output_dir = PROJECT_ROOT / "data" / "outputs"
+        self.models_dir = PROJECT_ROOT / "models"
+        
+        # Ensure output directory exists
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        
+        self.create_widgets()
+        self.check_models()
+        
+    def create_widgets(self):
+        """Create and layout all GUI widgets."""
+        # Title
+        title_label = tk.Label(
+            self.root,
+            text="spaCy NER+NEL Demo",
+            font=("Arial", 18, "bold"),
+            pady=10
+        )
+        title_label.pack()
+        
+        # Model selection frame
+        model_frame = ttk.LabelFrame(self.root, text="Model Selection", padding=10)
+        model_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        ttk.Label(model_frame, text="Model:").grid(row=0, column=0, sticky=tk.W, padx=5)
+        
+        self.model_var = tk.StringVar()
+        self.model_combo = ttk.Combobox(
+            model_frame,
+            textvariable=self.model_var,
+            state="readonly",
+            width=40
+        )
+        self.model_combo.grid(row=0, column=1, padx=5, sticky=tk.W)
+        
+        ttk.Button(
+            model_frame,
+            text="Load Model",
+            command=self.load_model
+        ).grid(row=0, column=2, padx=5)
+        
+        ttk.Button(
+            model_frame,
+            text="Refresh",
+            command=self.check_models
+        ).grid(row=0, column=3, padx=5)
+        
+        self.model_status_label = ttk.Label(model_frame, text="No model loaded", foreground="red")
+        self.model_status_label.grid(row=1, column=0, columnspan=4, sticky=tk.W, padx=5, pady=5)
+        
+        # Input frame
+        input_frame = ttk.LabelFrame(self.root, text="Input Text", padding=10)
+        input_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        
+        self.input_text = scrolledtext.ScrolledText(
+            input_frame,
+            wrap=tk.WORD,
+            height=10,
+            font=("Arial", 10)
+        )
+        self.input_text.pack(fill=tk.BOTH, expand=True)
+        
+        # Sample text button
+        sample_frame = tk.Frame(input_frame)
+        sample_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Button(
+            sample_frame,
+            text="Load Sample Text",
+            command=self.load_sample_text
+        ).pack(side=tk.LEFT, padx=5)
+        
+        ttk.Button(
+            sample_frame,
+            text="Clear",
+            command=lambda: self.input_text.delete(1.0, tk.END)
+        ).pack(side=tk.LEFT, padx=5)
+        
+        # Action buttons
+        button_frame = tk.Frame(self.root)
+        button_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        ttk.Button(
+            button_frame,
+            text="Process Text (NER)",
+            command=self.process_text,
+            style="Accent.TButton"
+        ).pack(side=tk.LEFT, padx=5)
+        
+        ttk.Button(
+            button_frame,
+            text="View Last Output",
+            command=self.view_last_output
+        ).pack(side=tk.LEFT, padx=5)
+        
+        ttk.Button(
+            button_frame,
+            text="Open Output Folder",
+            command=self.open_output_folder
+        ).pack(side=tk.LEFT, padx=5)
+        
+        # Results frame
+        results_frame = ttk.LabelFrame(self.root, text="Results", padding=10)
+        results_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        
+        self.results_text = scrolledtext.ScrolledText(
+            results_frame,
+            wrap=tk.WORD,
+            height=8,
+            font=("Courier", 9)
+        )
+        self.results_text.pack(fill=tk.BOTH, expand=True)
+        
+        # Status bar
+        self.status_var = tk.StringVar(value="Ready")
+        status_bar = ttk.Label(
+            self.root,
+            textvariable=self.status_var,
+            relief=tk.SUNKEN,
+            anchor=tk.W
+        )
+        status_bar.pack(fill=tk.X, side=tk.BOTTOM)
+        
+    def check_models(self):
+        """Check for available models in the models directory."""
+        self.model_combo['values'] = []
+        
+        if not self.models_dir.exists():
+            self.models_dir.mkdir(parents=True, exist_ok=True)
+            self.status_var.set("Created models directory. Please add trained models.")
+            return
+        
+        # Look for models in the models directory
+        available_models = []
+        
+        # Check for model-best directories
+        for model_dir in self.models_dir.iterdir():
+            if model_dir.is_dir():
+                model_best_path = model_dir / "model-best"
+                if model_best_path.exists() and model_best_path.is_dir():
+                    available_models.append(model_dir.name)
+        
+        if available_models:
+            self.model_combo['values'] = available_models
+            self.model_combo.current(0)
+            self.status_var.set(f"Found {len(available_models)} model(s)")
+        else:
+            self.status_var.set("No models found. Please add models to the models/ directory.")
+            messagebox.showinfo(
+                "No Models Found",
+                "No trained models found in the models/ directory.\n\n"
+                "Please place your trained spaCy model in:\n"
+                "models/{model_name}/model-best/\n\n"
+                "Or download a pre-trained model:\n"
+                "python -m spacy download en_core_web_sm"
+            )
+    
+    def load_model(self):
+        """Load the selected spaCy model."""
+        model_name = self.model_var.get()
+        
+        if not model_name:
+            messagebox.showwarning("No Model Selected", "Please select a model first.")
+            return
+        
+        model_path = self.models_dir / model_name / "model-best"
+        
+        if not model_path.exists():
+            messagebox.showerror(
+                "Model Not Found",
+                f"Model path does not exist:\n{model_path}"
+            )
+            return
+        
+        try:
+            self.status_var.set(f"Loading model: {model_name}...")
+            self.root.update()
+            
+            self.nlp = spacy.load(model_path)
+            self.model_name = model_name
+            
+            self.model_status_label.config(
+                text=f"Model loaded: {model_name}",
+                foreground="green"
+            )
+            self.status_var.set(f"Model loaded successfully: {model_name}")
+            
+            # Display model info
+            self.results_text.delete(1.0, tk.END)
+            self.results_text.insert(tk.END, f"Model: {model_name}\n")
+            self.results_text.insert(tk.END, f"Path: {model_path}\n")
+            self.results_text.insert(tk.END, f"Pipeline: {self.nlp.pipe_names}\n")
+            
+            if self.nlp.meta:
+                self.results_text.insert(tk.END, f"\nModel Metadata:\n")
+                for key, value in self.nlp.meta.items():
+                    self.results_text.insert(tk.END, f"  {key}: {value}\n")
+            
+        except Exception as e:
+            messagebox.showerror(
+                "Error Loading Model",
+                f"Failed to load model:\n{str(e)}"
+            )
+            self.status_var.set("Error loading model")
+    
+    def load_sample_text(self):
+        """Load sample text for demonstration."""
+        sample_text = (
+            "Apple Inc. is an American multinational technology company headquartered "
+            "in Cupertino, California. Tim Cook is the CEO of Apple. The company was "
+            "founded by Steve Jobs, Steve Wozniak, and Ronald Wayne in 1976. "
+            "Apple is known for products like the iPhone, iPad, and Mac computers. "
+            "In 2024, Apple continued to innovate in artificial intelligence and "
+            "augmented reality technologies."
+        )
+        self.input_text.delete(1.0, tk.END)
+        self.input_text.insert(1.0, sample_text)
+        self.status_var.set("Sample text loaded")
+    
+    def process_text(self):
+        """Process the input text and display NER results."""
+        if self.nlp is None:
+            messagebox.showwarning(
+                "No Model Loaded",
+                "Please load a model first."
+            )
+            return
+        
+        text = self.input_text.get(1.0, tk.END).strip()
+        
+        if not text:
+            messagebox.showwarning(
+                "No Input Text",
+                "Please enter some text to process."
+            )
+            return
+        
+        try:
+            self.status_var.set("Processing text...")
+            self.root.update()
+            
+            # Process text with spaCy
+            doc = self.nlp(text)
+            
+            # Display entities in results
+            self.results_text.delete(1.0, tk.END)
+            self.results_text.insert(tk.END, "Named Entities Found:\n")
+            self.results_text.insert(tk.END, "=" * 60 + "\n\n")
+            
+            if doc.ents:
+                for ent in doc.ents:
+                    self.results_text.insert(
+                        tk.END,
+                        f"Text: {ent.text:20} | Label: {ent.label_:10} | "
+                        f"Start: {ent.start_char:4} | End: {ent.end_char:4}\n"
+                    )
+                    # If entity has KB ID (for NEL)
+                    if hasattr(ent, 'kb_id_') and ent.kb_id_:
+                        self.results_text.insert(tk.END, f"  KB ID: {ent.kb_id_}\n")
+            else:
+                self.results_text.insert(tk.END, "No entities found.\n")
+            
+            self.results_text.insert(tk.END, f"\n\nTotal entities: {len(doc.ents)}\n")
+            
+            # Generate HTML visualization with displaCy
+            html = displacy.render(doc, style="ent", page=True)
+            
+            # Save HTML to output directory
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_file = self.output_dir / f"ner_output_{timestamp}.html"
+            
+            with open(output_file, "w", encoding="utf-8") as f:
+                f.write(html)
+            
+            self.last_output_file = output_file
+            self.status_var.set(f"Processing complete. Output saved to: {output_file.name}")
+            
+            messagebox.showinfo(
+                "Processing Complete",
+                f"Found {len(doc.ents)} entities.\n\n"
+                f"HTML visualization saved to:\n{output_file.name}\n\n"
+                "Click 'View Last Output' to open in browser."
+            )
+            
+        except Exception as e:
+            messagebox.showerror(
+                "Processing Error",
+                f"Error processing text:\n{str(e)}"
+            )
+            self.status_var.set("Error processing text")
+    
+    def view_last_output(self):
+        """Open the last generated HTML output in the default browser."""
+        if hasattr(self, 'last_output_file') and self.last_output_file.exists():
+            webbrowser.open(f"file://{self.last_output_file.absolute()}")
+            self.status_var.set(f"Opened: {self.last_output_file.name}")
+        else:
+            # Try to find the most recent output
+            output_files = sorted(self.output_dir.glob("ner_output_*.html"), reverse=True)
+            if output_files:
+                webbrowser.open(f"file://{output_files[0].absolute()}")
+                self.status_var.set(f"Opened: {output_files[0].name}")
+            else:
+                messagebox.showinfo(
+                    "No Output",
+                    "No output files found. Process some text first."
+                )
+    
+    def open_output_folder(self):
+        """Open the output folder in the system file explorer."""
+        if sys.platform == 'win32':
+            os.startfile(self.output_dir)
+        elif sys.platform == 'darwin':  # macOS
+            os.system(f'open "{self.output_dir}"')
+        else:  # Linux
+            os.system(f'xdg-open "{self.output_dir}"')
+        
+        self.status_var.set(f"Opened output folder")
+
+
+def main():
+    """Main entry point for the application."""
+    root = tk.Tk()
+    app = NERDemoGUI(root)
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
