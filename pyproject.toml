@@ -1,0 +1,113 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools-scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nel-demo"
+version = "0.1.0"
+description = "A simple demonstration application for Named Entity Recognition (NER) and Named Entity Linking (NEL) using spaCy models with a minimal GUI interface."
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "TESLA - Text Embeddings - Serbian Language Applications", email = "tesla@rgf.bg.ac.rs"},
+    {name = "Language Resources and Technologies Society - Jerteh", email = "info@jerteh.rs"},
+]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+]
+dependencies = [
+    "spacy>=3.7.0",
+]
+
+[project.optional-dependencies]
+transformers = [
+    "spacy-transformers",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+    "ruff>=0.1.0",
+    "mypy>=1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/te-sla/NEL_Demo"
+Repository = "https://github.com/te-sla/NEL_Demo"
+"TESLA" = "https://tesla.rgf.bg.ac.rs/"
+"Jerteh" = "https://jerteh.rs/"
+
+[project.scripts]
+nel-demo = "gui:main"
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--strict-config",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "ARG", # flake8-unused-arguments
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # do not perform function calls in argument defaults
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # unused imports in __init__.py
+"tests/*" = ["ARG", "S101"]  # allow unused args and assert in tests
+
+[tool.ruff.lint.isort]
+known-first-party = ["text_chunker", "gui"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+
+[[tool.mypy.overrides]]
+module = [
+    "spacy.*",
+    "tkinter.*",
+]
+ignore_missing_imports = true
