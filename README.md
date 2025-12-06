@@ -181,11 +181,11 @@ The application will:
 ### Text Processing with Paragraph Chunking
 
 The application automatically uses chunking for any text with multiple paragraphs:
-- **Smart Chunking**: Splitting text on paragraph boundaries to preserve logical structure and improve NER accuracy
-- **Automatic Processing**: Each paragraph chunk is processed separately with spaCy NER
+- **Smart Chunking**: Paragraphs are grouped into appropriately-sized chunks (up to 100K chars each) to preserve logical structure and improve NER accuracy
+- **Automatic Processing**: Each chunk is processed separately with spaCy NER
 - **Merged Output**: All chunks are combined into a single HTML visualization
 - **Visual Separation**: Section breaks are added between chunks in the output
-- **Better Context**: Processing text by paragraphs helps spaCy maintain clearer context boundaries for entity recognition
+- **Better Context**: Processing text with paragraph boundaries helps spaCy maintain clearer context for entity recognition
 
 Single-paragraph texts are processed normally without chunking overhead. This approach ensures optimal NER performance while maintaining the readability and structure of the original text.
 

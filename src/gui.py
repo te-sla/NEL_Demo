@@ -296,7 +296,12 @@ class NERDemoGUI:
             
             # Check if text has multiple paragraphs (chunking improves NER with paragraph context)
             text_length = len(text)
-            paragraphs = split_into_paragraphs(text) if split_into_paragraphs is not None else []
+            if split_into_paragraphs is not None:
+                paragraphs = split_into_paragraphs(text)
+            else:
+                # Fallback paragraph detection if text_chunker module failed to import
+                paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
+            
             has_multiple_paragraphs = len(paragraphs) > 1
             
             if has_multiple_paragraphs and process_text_in_chunks is not None:
@@ -343,7 +348,7 @@ class NERDemoGUI:
                     self.results_text.insert(tk.END, "No entities found.\n")
                 
                 self.results_text.insert(tk.END, f"\n\nTotal entities: {len(all_entities)}\n")
-                self.results_text.insert(tk.END, f"Text was chunked for better paragraph context.\n")
+                self.results_text.insert(tk.END, f"Text was chunked into {len(paragraphs)} paragraph(s) for better context.\n")
                 
                 self.last_output_file = output_file
                 self.status_var.set(f"Processing complete. Output saved to: {output_file.name}")
