@@ -80,36 +80,11 @@ Instaler će:
 
 ## Podešavanje modela
 
-### Opcija 1: Preuzimanje pre-treniranog modela
+### Unapred instaliran model
 
-Nakon instalacije, aktivirajte vaše virtuelno okruženje i preuzmite spaCy model:
+Srpski NER+NEL model (`trsic4-CNN-ner-nel`) je već instaliran u `models/` direktorijumu i spreman je za upotrebu. Nije potrebno dodatno podešavanje!
 
-**Windows:**
-```powershell
-.\venv\Scripts\Activate.ps1
-python -m spacy download en_core_web_sm
-```
-
-**Linux/Mac:**
-```bash
-source venv/bin/activate
-python -m spacy download en_core_web_sm
-```
-
-Zatim kreirajte strukturu direktorijuma i kopirajte model:
-```bash
-# Kreirajte strukturu direktorijuma
-mkdir -p models/en_core_web_sm/model-best
-
-# Pronađite i kopirajte model (stvarni model je u verzioniranom poddirektorijumu)
-# Linux/Mac:
-python -c "import en_core_web_sm, shutil, pathlib; src = pathlib.Path(en_core_web_sm.__file__).parent / list(pathlib.Path(en_core_web_sm.__file__).parent.glob('en_core_web_sm-*'))[0].name; shutil.copytree(src, 'models/en_core_web_sm/model-best', dirs_exist_ok=True)"
-
-# Windows PowerShell:
-# python -c "import en_core_web_sm, shutil, pathlib; src = pathlib.Path(en_core_web_sm.__file__).parent / list(pathlib.Path(en_core_web_sm.__file__).parent.glob('en_core_web_sm-*'))[0].name; shutil.copytree(src, 'models/en_core_web_sm/model-best', dirs_exist_ok=True)"
-```
-
-### Opcija 2: Korišćenje vašeg sopstvenog treniranog modela
+### Korišćenje vašeg sopstvenog treniranog modela
 
 Ako imate trenirani spaCy model:
 
