@@ -199,6 +199,13 @@ Each processed text generates an HTML file with:
 
 Output files are saved in: `data/outputs/`
 
+## Development
+
+- Install dependencies into a virtual environment with `pip install -r requirements.txt`.
+- Run the automated test suite locally with `python -m pytest -q` (mirrors the CI workflow).
+- Control logging verbosity for the GUI and chunking helpers by setting `LOG_LEVEL` (for example, `LOG_LEVEL=DEBUG python src/gui.py`).
+- CI: GitHub Actions runs the test suite on every push and pull request.
+
 ## Troubleshooting
 
 ### "Python is not installed or not in PATH"

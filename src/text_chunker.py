@@ -14,20 +14,17 @@ for efficient processing. This module helps handle larger documents by:
 3. Merging the HTML outputs into a cohesive visualization
 """
 
-from typing import List, Optional, Tuple
+from __future__ import annotations
+
 import re
-import warnings
 from pathlib import Path
+from typing import Callable, List, Optional, Tuple
 
-# Try to import spacy's displacy for HTML rendering
-# This is optional and only needed for process_text_in_chunks function
-try:
-    from spacy import displacy
-    DISPLACY_AVAILABLE = True
-except ImportError:
-    DISPLACY_AVAILABLE = False
-    displacy = None
+from logging_utils import get_logger
+from spacy import displacy
 
+
+logger = get_logger(__name__)
 
 # Default maximum chunk size (conservative estimate for spaCy)
 DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
@@ -49,6 +46,7 @@ def split_into_paragraphs(text: str) -> List[str]:
     # Filter out empty paragraphs and strip whitespace
     paragraphs = [p.strip() for p in paragraphs if p.strip()]
     
+    logger.debug("Split text into %d paragraphs", len(paragraphs))
     return paragraphs
 
 
@@ -72,18 +70,22 @@ def chunk_text(text: str, max_chunk_size: int = DEFAULT_MAX_CHUNK_SIZE) -> List[
     """
     if max_chunk_size < 100:
         raise ValueError("max_chunk_size must be at least 100 characters")
+
+    logger.debug("Chunking text of length %d with max_chunk_size=%d", len(text), max_chunk_size)
     
     if not text or not text.strip():
+        logger.info("Received empty or whitespace-only text; returning no chunks")
         return []
     
     # If text is small enough, return as single chunk
     if len(text) <= max_chunk_size:
+        logger.debug("Text fits within max_chunk_size; returning single chunk")
         return [text]
     
     # Split into paragraphs
     paragraphs = split_into_paragraphs(text)
     
-    chunks = []
+    chunks: List[str] = []
     current_chunk = []
     current_size = 0
     
@@ -171,6 +173,8 @@ def merge_html_outputs(html_chunks: List[str], title: str = "NER Output") -> str
     if len(html_chunks) == 1:
         return html_chunks[0]
     
+    logger.debug("Merging %d HTML chunk(s) into a single document titled '%s'", len(html_chunks), title)
+
     # Extract the CSS and content from the first chunk
     # displaCy HTML has a standard structure with <style> and <div> tags
     
@@ -198,7 +202,7 @@ def merge_html_outputs(html_chunks: List[str], title: str = "NER Output") -> str
                                  '--- Document Section Break ---</div>')
         else:
             # Log warning if chunk doesn't match expected pattern
-            warnings.warn(f"Chunk {i+1} doesn't match expected HTML pattern and will be skipped")
+            logger.warning("Chunk %d does not match expected HTML pattern and will be skipped", i + 1)
     
     # Build the merged HTML
     merged_html = f"""<!DOCTYPE html>
@@ -216,6 +220,7 @@ def merge_html_outputs(html_chunks: List[str], title: str = "NER Output") -> str
 </html>
 """
     
+    logger.debug("Merged HTML length: %d characters", len(merged_html))
     return merged_html
 
 
@@ -223,7 +228,8 @@ def process_text_in_chunks(
     nlp,
     text: str,
     max_chunk_size: int = DEFAULT_MAX_CHUNK_SIZE,
-    output_path: Optional[Path] = None
+    output_path: Optional[Path] = None,
+    progress_callback: Optional[Callable[[int, int], None]] = None,
 ) -> Tuple[List, str, int]:
     """
     Process text in chunks using spaCy NLP pipeline and merge results.
@@ -240,6 +246,7 @@ def process_text_in_chunks(
         text: Input text to process
         max_chunk_size: Maximum chunk size in characters
         output_path: Optional path to save merged HTML output
+        progress_callback: Optional callable receiving (completed_chunks, total_chunks)
         
     Returns:
         Tuple of (all_entities, merged_html, num_chunks)
@@ -256,18 +263,20 @@ def process_text_in_chunks(
     if not text or not text.strip():
         raise ValueError("text cannot be empty")
     
-    if not DISPLACY_AVAILABLE:
-        raise ImportError("spacy.displacy is required for process_text_in_chunks. Please install spacy.")
-    
     # Chunk the text
     chunks = chunk_text(text, max_chunk_size)
+    logger.info("Processing %d chunk(s) with max_chunk_size=%d", len(chunks), max_chunk_size)
     
     # Process each chunk
     all_entities = []
     html_outputs = []
-    
-    for chunk in chunks:
+
+    if progress_callback:
+        progress_callback(0, len(chunks))
+
+    for index, chunk in enumerate(chunks, start=1):
         # Process with spaCy
+        logger.debug("Processing chunk %d with length %d", index, len(chunk))
         doc = nlp(chunk)
         
         # Collect entities
@@ -277,6 +286,9 @@ def process_text_in_chunks(
         # Use page=True to get the full HTML page (including wrapper)
         html = displacy.render(doc, style="ent", page=True)
         html_outputs.append(html)
+
+        if progress_callback:
+            progress_callback(index, len(chunks))
     
     # Merge HTML outputs
     merged_html = merge_html_outputs(html_outputs, title="Chunked NER Output")
@@ -286,5 +298,7 @@ def process_text_in_chunks(
         output_path.parent.mkdir(parents=True, exist_ok=True)
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(merged_html)
+        logger.info("Merged HTML written to %s", output_path)
     
+    logger.info("Completed processing with %d entity(ies) found across %d chunk(s)", len(all_entities), len(chunks))
     return all_entities, merged_html, len(chunks)

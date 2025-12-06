@@ -6,21 +6,39 @@ This module provides comprehensive tests for the text chunking functionality,
 including paragraph-based chunking, HTML merging, and edge cases.
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
+import spacy
 
 # Add src directory to path
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from text_chunker import (
-    split_into_paragraphs,
+    DEFAULT_MAX_CHUNK_SIZE,
     chunk_text,
     merge_html_outputs,
     process_text_in_chunks,
-    DEFAULT_MAX_CHUNK_SIZE
+    split_into_paragraphs,
 )
+
+
+def _build_rule_based_nlp():
+    """Create a lightweight spaCy pipeline with deterministic entities."""
+
+    nlp = spacy.blank("en")
+    ruler = nlp.add_pipe("entity_ruler")
+    ruler.add_patterns(
+        [
+            {"label": "ORG", "pattern": "Apple"},
+            {"label": "GPE", "pattern": "Cupertino"},
+            {"label": "ORG", "pattern": "Microsoft"},
+            {"label": "PERSON", "pattern": "Tim Cook"},
+        ]
+    )
+    return nlp
 
 
 class TestSplitIntoParagraphs:
@@ -222,19 +240,63 @@ class TestProcessTextInChunks:
         with pytest.raises(ValueError, match="text cannot be empty"):
             process_text_in_chunks(DummyNLP(), "   \n\n   ")
     
-    @pytest.mark.skip(reason="Requires actual spaCy model, tested in integration")
-    def test_small_text_processing(self):
-        """Test processing small text that fits in one chunk."""
-        # This test requires an actual spaCy model to work with displaCy
-        # It's better tested with integration tests that use real models
-        pass
-    
-    @pytest.mark.skip(reason="Requires actual spaCy model, tested in integration")
-    def test_large_text_chunking(self):
-        """Test processing large text that requires chunking."""
-        # This test requires an actual spaCy model to work with displaCy
-        # It's better tested with integration tests that use real models
-        pass
+    def test_small_text_processing(self, tmp_path):
+        """Process small text and ensure entities are preserved."""
+
+        nlp = _build_rule_based_nlp()
+        text = "Apple is headquartered in Cupertino. Tim Cook leads the company."
+        output_path = tmp_path / "small_text.html"
+
+        entities, html, num_chunks = process_text_in_chunks(
+            nlp, text, max_chunk_size=500, output_path=output_path
+        )
+
+        assert num_chunks == 1
+        assert len(entities) >= 2  # Cupertino and Apple should match
+        assert "Apple" in html and "Cupertino" in html
+        assert output_path.exists()
+
+    def test_large_text_chunking(self, tmp_path):
+        """Process large text and confirm multiple chunks and HTML separators."""
+
+        nlp = _build_rule_based_nlp()
+        paragraph = "Apple is headquartered in Cupertino. Microsoft has offices worldwide. "
+        text = "\n\n".join([paragraph] * 30)
+        output_path = tmp_path / "large_text.html"
+
+        entities, html, num_chunks = process_text_in_chunks(
+            nlp, text, max_chunk_size=500, output_path=output_path
+        )
+
+        assert num_chunks > 1
+        assert len(entities) >= num_chunks  # Each chunk should yield at least one entity
+        assert "Document Section Break" in html
+        assert output_path.exists()
+
+    def test_progress_callback_invoked(self):
+        """Ensure progress callback receives chunk progress updates."""
+
+        nlp = _build_rule_based_nlp()
+        text = "\n\n".join(["Apple is in Cupertino." for _ in range(10)])
+
+        progress_updates = []
+
+        def _record_progress(completed, total):
+            progress_updates.append((completed, total))
+
+        entities, _, num_chunks = process_text_in_chunks(
+            nlp,
+            text,
+            max_chunk_size=120,
+            progress_callback=_record_progress,
+        )
+
+        assert num_chunks > 1
+        assert len(entities) >= num_chunks
+        assert progress_updates[0] == (0, num_chunks)
+        assert progress_updates[-1] == (num_chunks, num_chunks)
+        # Should record one entry per chunk plus the initial zeroed state
+        assert len(progress_updates) == num_chunks + 1
 
 
 class TestEdgeCases:

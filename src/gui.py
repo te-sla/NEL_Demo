@@ -15,27 +15,21 @@ from pathlib import Path
 from datetime import datetime
 import webbrowser
 
+from logging_utils import get_logger, setup_logging
+
 # Add the project root to the path
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-try:
-    import spacy
-    from spacy import displacy
-except ImportError:
-    print("Error: spaCy is not installed.")
-    print("Please run the installer script (install.ps1 or install.sh) first.")
-    sys.exit(1)
+import spacy
+from spacy import displacy
 
 # Import text chunker module
-try:
-    from text_chunker import process_text_in_chunks, split_into_paragraphs, DEFAULT_MAX_CHUNK_SIZE
-except ImportError:
-    print("Warning: text_chunker module not found. Large text processing may fail.")
-    process_text_in_chunks = None
-    split_into_paragraphs = None
-    # Fallback value matches the default in text_chunker.py
-    DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
+from text_chunker import process_text_in_chunks, split_into_paragraphs, DEFAULT_MAX_CHUNK_SIZE
+
+
+setup_logging()
+logger = get_logger(__name__)
 
 
 class NERDemoGUI:
@@ -55,9 +49,10 @@ class NERDemoGUI:
         self.model_name = None
         self.output_dir = PROJECT_ROOT / "data" / "outputs"
         self.models_dir = PROJECT_ROOT / "models"
-        
+
         # Ensure output directory exists
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        logger.info("Output directory initialized at %s", self.output_dir)
         
         self.create_widgets()
         self.check_models()
@@ -157,7 +152,7 @@ class NERDemoGUI:
         # Results frame
         results_frame = ttk.LabelFrame(self.root, text="Results", padding=10)
         results_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
-        
+
         self.results_text = scrolledtext.ScrolledText(
             results_frame,
             wrap=tk.WORD,
@@ -165,8 +160,21 @@ class NERDemoGUI:
             font=("Courier", 9)
         )
         self.results_text.pack(fill=tk.BOTH, expand=True)
-        
-        # Status bar
+
+        # Progress bar and status bar
+        progress_frame = tk.Frame(self.root)
+        progress_frame.pack(fill=tk.X, padx=10, pady=(0, 5))
+
+        self.progress_bar = ttk.Progressbar(
+            progress_frame,
+            orient=tk.HORIZONTAL,
+            mode="determinate",
+            maximum=1,
+            value=0,
+            length=100
+        )
+        self.progress_bar.pack(fill=tk.X)
+
         self.status_var = tk.StringVar(value="Ready")
         status_bar = ttk.Label(
             self.root,
@@ -183,6 +191,7 @@ class NERDemoGUI:
         if not self.models_dir.exists():
             self.models_dir.mkdir(parents=True, exist_ok=True)
             self.status_var.set("Created models directory. Please add trained models.")
+            logger.warning("Models directory did not exist and was created at %s", self.models_dir)
             return
         
         # Look for models in the models directory
@@ -199,6 +208,7 @@ class NERDemoGUI:
             self.model_combo['values'] = available_models
             self.model_combo.current(0)
             self.status_var.set(f"Found {len(available_models)} model(s)")
+            logger.info("Discovered %d available model(s)", len(available_models))
         else:
             self.status_var.set("No models found. Please add models to the models/ directory.")
             messagebox.showinfo(
@@ -209,13 +219,15 @@ class NERDemoGUI:
                 "Or download a pre-trained model:\n"
                 "python -m spacy download en_core_web_sm"
             )
+            logger.warning("No models discovered under %s", self.models_dir)
     
     def load_model(self):
         """Load the selected spaCy model."""
         model_name = self.model_var.get()
-        
+
         if not model_name:
             messagebox.showwarning("No Model Selected", "Please select a model first.")
+            logger.warning("Attempted to load model without selection")
             return
         
         model_path = self.models_dir / model_name / "model-best"
@@ -225,15 +237,16 @@ class NERDemoGUI:
                 "Model Not Found",
                 f"Model path does not exist:\n{model_path}"
             )
+            logger.error("Model path not found: %s", model_path)
             return
         
         try:
             self.status_var.set(f"Loading model: {model_name}...")
-            self.root.update()
-            
+            self._start_indeterminate_progress()
+
             self.nlp = spacy.load(model_path)
             self.model_name = model_name
-            
+
             self.model_status_label.config(
                 text=f"Model loaded: {model_name}",
                 foreground="green"
@@ -250,13 +263,18 @@ class NERDemoGUI:
                 self.results_text.insert(tk.END, f"\nModel Metadata:\n")
                 for key, value in self.nlp.meta.items():
                     self.results_text.insert(tk.END, f"  {key}: {value}\n")
-            
+
+            logger.info("Loaded model '%s' with pipeline %s", model_name, self.nlp.pipe_names)
+
         except Exception as e:
             messagebox.showerror(
                 "Error Loading Model",
                 f"Failed to load model:\n{str(e)}"
             )
             self.status_var.set("Error loading model")
+            logger.exception("Failed to load model '%s'", model_name)
+        finally:
+            self._reset_progress()
     
     def load_sample_text(self):
         """Load sample text for demonstration."""
@@ -271,6 +289,7 @@ class NERDemoGUI:
         self.input_text.delete(1.0, tk.END)
         self.input_text.insert(1.0, sample_text)
         self.status_var.set("Sample text loaded")
+        logger.debug("Loaded sample text into input area")
     
     def process_text(self):
         """Process the input text and display NER results."""
@@ -279,6 +298,7 @@ class NERDemoGUI:
                 "No Model Loaded",
                 "Please load a model first."
             )
+            logger.warning("Process requested without a loaded model")
             return
         
         text = self.input_text.get(1.0, tk.END).strip()
@@ -288,12 +308,13 @@ class NERDemoGUI:
                 "No Input Text",
                 "Please enter some text to process."
             )
+            logger.warning("Process requested with empty text")
             return
         
         try:
             self.status_var.set("Processing text...")
-            self.root.update()
-            
+            self._start_indeterminate_progress()
+
             # Check if text has multiple paragraphs (chunking improves NER with paragraph context)
             text_length = len(text)
             if split_into_paragraphs is not None:
@@ -306,21 +327,47 @@ class NERDemoGUI:
             
             if has_multiple_paragraphs and process_text_in_chunks is not None:
                 # Use chunking for multi-paragraph texts
-                self.status_var.set(f"Processing text ({text_length:,} chars, {len(paragraphs)} paragraphs) in chunks...")
-                self.root.update()
-                
+                self.status_var.set(
+                    f"Processing text ({text_length:,} chars, {len(paragraphs)} paragraphs) in chunks..."
+                )
+                self._reset_progress()
+
+                logger.info("Processing %d characters across %d paragraph(s) using chunking", text_length, len(paragraphs))
+
                 # Save output file path
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 output_file = self.output_dir / f"ner_output_{timestamp}.html"
-                
+
+                def _progress_update(completed, total):
+                    if total <= 0:
+                        return
+                    self.progress_bar.stop()
+                    self.progress_bar.config(mode="determinate", maximum=total)
+                    self.progress_bar["value"] = completed
+                    status_message = (
+                        f"Processing chunk {completed + 1} of {total}..."
+                        if completed < total
+                        else "Merging chunked outputs..."
+                    )
+                    self.status_var.set(status_message)
+                    self.root.update_idletasks()
+
                 # Process text in chunks
                 all_entities, html, num_chunks = process_text_in_chunks(
-                    self.nlp, 
-                    text, 
+                    self.nlp,
+                    text,
                     max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
-                    output_path=output_file
+                    output_path=output_file,
+                    progress_callback=_progress_update,
                 )
-                
+
+                logger.info(
+                    "Chunked processing complete: %d entity(ies) across %d chunk(s); output saved to %s",
+                    len(all_entities),
+                    num_chunks,
+                    output_file,
+                )
+
                 # Display entities in results
                 self.results_text.delete(1.0, tk.END)
                 self.results_text.insert(tk.END, "Named Entities Found (Chunked Processing):\n")
@@ -362,6 +409,7 @@ class NERDemoGUI:
                 )
             else:
                 # Process text normally (single paragraph or no chunking available)
+                logger.info("Processing %d characters without chunking", text_length)
                 doc = self.nlp(text)
                 
                 # Display entities in results
@@ -393,9 +441,14 @@ class NERDemoGUI:
                 
                 with open(output_file, "w", encoding="utf-8") as f:
                     f.write(html)
-                
+
                 self.last_output_file = output_file
                 self.status_var.set(f"Processing complete. Output saved to: {output_file.name}")
+                logger.info(
+                    "Standard processing complete: %d entity(ies); output saved to %s",
+                    len(doc.ents),
+                    output_file,
+                )
                 
                 messagebox.showinfo(
                     "Processing Complete",
@@ -403,30 +456,48 @@ class NERDemoGUI:
                     f"HTML visualization saved to:\n{output_file.name}\n\n"
                     "Click 'View Last Output' to open in browser."
                 )
-            
+
         except Exception as e:
             messagebox.showerror(
                 "Processing Error",
                 f"Error processing text:\n{str(e)}"
             )
             self.status_var.set("Error processing text")
-    
+            logger.exception("Error while processing text")
+        finally:
+            self._reset_progress()
+
+    def _start_indeterminate_progress(self):
+        """Start an indeterminate progress indicator for long-running tasks."""
+        self.progress_bar.config(mode="indeterminate")
+        self.progress_bar.start(10)
+        self.root.update_idletasks()
+
+    def _reset_progress(self):
+        """Reset and stop the progress bar."""
+        self.progress_bar.stop()
+        self.progress_bar.config(mode="determinate", maximum=1, value=0)
+        self.root.update_idletasks()
+
     def view_last_output(self):
         """Open the last generated HTML output in the default browser."""
         if hasattr(self, 'last_output_file') and self.last_output_file.exists():
             webbrowser.open(f"file://{self.last_output_file.absolute()}")
             self.status_var.set(f"Opened: {self.last_output_file.name}")
+            logger.debug("Opened last output file %s", self.last_output_file)
         else:
             # Try to find the most recent output
             output_files = sorted(self.output_dir.glob("ner_output_*.html"), reverse=True)
             if output_files:
                 webbrowser.open(f"file://{output_files[0].absolute()}")
                 self.status_var.set(f"Opened: {output_files[0].name}")
+                logger.debug("Opened most recent output file %s", output_files[0])
             else:
                 messagebox.showinfo(
                     "No Output",
                     "No output files found. Process some text first."
                 )
+                logger.info("View Last Output requested but no outputs were found")
     
     def open_output_folder(self):
         """Open the output folder in the system file explorer."""
@@ -437,13 +508,15 @@ class NERDemoGUI:
                 subprocess.run(['open', str(self.output_dir)], check=False)
             else:  # Linux
                 subprocess.run(['xdg-open', str(self.output_dir)], check=False)
-            
+
             self.status_var.set(f"Opened output folder")
+            logger.debug("Requested open of output folder via platform handler")
         except Exception as e:
             messagebox.showerror(
                 "Error",
                 f"Could not open output folder:\n{str(e)}"
             )
+            logger.exception("Failed to open output folder")
 
 
 def main():
