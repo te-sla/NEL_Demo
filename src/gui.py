@@ -10,6 +10,7 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox, filedialog
 import os
 import sys
+import subprocess
 from pathlib import Path
 from datetime import datetime
 import webbrowser
@@ -352,14 +353,20 @@ class NERDemoGUI:
     
     def open_output_folder(self):
         """Open the output folder in the system file explorer."""
-        if sys.platform == 'win32':
-            os.startfile(self.output_dir)
-        elif sys.platform == 'darwin':  # macOS
-            os.system(f'open "{self.output_dir}"')
-        else:  # Linux
-            os.system(f'xdg-open "{self.output_dir}"')
-        
-        self.status_var.set(f"Opened output folder")
+        try:
+            if sys.platform == 'win32':
+                subprocess.run(['explorer', str(self.output_dir)], check=False)
+            elif sys.platform == 'darwin':  # macOS
+                subprocess.run(['open', str(self.output_dir)], check=False)
+            else:  # Linux
+                subprocess.run(['xdg-open', str(self.output_dir)], check=False)
+            
+            self.status_var.set(f"Opened output folder")
+        except Exception as e:
+            messagebox.showerror(
+                "Error",
+                f"Could not open output folder:\n{str(e)}"
+            )
 
 
 def main():

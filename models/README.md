@@ -36,9 +36,16 @@ See all available models: https://spacy.io/models
 
 After downloading, you need to copy the model to the correct location:
 
+**Option A: Using Python (recommended - works on all platforms):**
+```bash
+python -c "import en_core_web_sm, shutil, pathlib; src = pathlib.Path(en_core_web_sm.__file__).parent / list(pathlib.Path(en_core_web_sm.__file__).parent.glob('en_core_web_sm-*'))[0].name; pathlib.Path('models/en_core_web_sm/model-best').mkdir(parents=True, exist_ok=True); shutil.copytree(src, 'models/en_core_web_sm/model-best', dirs_exist_ok=True); print(f'Model copied to models/en_core_web_sm/model-best')"
+```
+
+**Option B: Manual copy (if Option A doesn't work):**
+
 **Find the model location:**
 ```bash
-python -c "import en_core_web_sm; import os; print(os.path.dirname(en_core_web_sm.__file__))"
+python -c "import en_core_web_sm; print(en_core_web_sm.__file__)"
 ```
 
 **Create the directory structure:**
@@ -48,14 +55,21 @@ mkdir -p models/en_core_web_sm/model-best
 
 **Copy the model files:**
 
+The downloaded model contains a versioned subdirectory (e.g., `en_core_web_sm-3.8.0`). You need to copy the contents of that subdirectory.
+
 **Linux/Mac:**
 ```bash
-cp -r venv/lib/python3.*/site-packages/en_core_web_sm/en_core_web_sm-*/* models/en_core_web_sm/model-best/
+# Find the versioned subdirectory first, then copy its contents
+MODEL_DIR=$(python -c "import en_core_web_sm, pathlib; print(pathlib.Path(en_core_web_sm.__file__).parent)")
+cp -r "$MODEL_DIR"/en_core_web_sm-*/. models/en_core_web_sm/model-best/
 ```
 
 **Windows (PowerShell):**
 ```powershell
-Copy-Item -Recurse -Path "venv\Lib\site-packages\en_core_web_sm\en_core_web_sm-*\*" -Destination "models\en_core_web_sm\model-best\"
+# Find the model directory
+$modelDir = python -c "import en_core_web_sm, pathlib; print(pathlib.Path(en_core_web_sm.__file__).parent)"
+# Copy the versioned subdirectory contents
+Get-ChildItem "$modelDir\en_core_web_sm-*" | Copy-Item -Recurse -Destination "models\en_core_web_sm\model-best\" -Force
 ```
 
 ### Step 4: Verify the Setup
