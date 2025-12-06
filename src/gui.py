@@ -344,12 +344,19 @@ class NERDemoGUI:
     def load_sample_text(self):
         """Load sample text for demonstration."""
         sample_text = (
-            "Apple Inc. is an American multinational technology company headquartered "
-            "in Cupertino, California. Tim Cook is the CEO of Apple. The company was "
-            "founded by Steve Jobs, Steve Wozniak, and Ronald Wayne in 1976. "
-            "Apple is known for products like the iPhone, iPad, and Mac computers. "
-            "In 2024, Apple continued to innovate in artificial intelligence and "
-            "augmented reality technologies."
+            "Народна банка Србије је централна банка Републике Србије са седиштем у Београду. "
+            "Гувернер Народне банке Србије је Јорgovanka Табаковић која се налази на тој позицији од 2012. године. "
+            "Народна банка Србије је основана 1884. године као Привилегована народна банка Краљевине Србије.\n\n"
+            
+            "Универзитет у Београду је најстарији и највећи универзитет у Србији, основан 1808. године. "
+            "Ректор Универзитета у Београду је професор Владан Ђокић. "
+            "Универзитет има 31 факултет и више од 90.000 студената. "
+            "Налази се у Београду, а његов главни кампус је на Студентском тргу.\n\n"
+            
+            "Новак Ђоковић је српски тенисер рођен у Београду 1987. године. "
+            "Ђоковић је освојио 24 Гренд слем титуле у појединачној конкуренцији. "
+            "Тренутно живи у Монте Карлу, али редовно посећује Србију. "
+            "Његов тренер је био Горан Ивaнишевић, бивши хрватски тенисер."
         )
         self.input_text.delete(1.0, tk.END)
         self.input_text.insert(1.0, sample_text)

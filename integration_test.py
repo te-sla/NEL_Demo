@@ -25,21 +25,24 @@ except ImportError as e:
 def create_large_sample_text():
     """Create a large sample text for testing."""
     base_text = """
-Apple Inc. is an American multinational technology company headquartered in Cupertino, California. 
-Tim Cook is the CEO of Apple. The company was founded by Steve Jobs, Steve Wozniak, and Ronald Wayne in 1976.
-Apple is known for products like the iPhone, iPad, and Mac computers.
+Народна банка Србије је централна банка Републике Србије са седиштем у Београду. 
+Гувернер Народне банке Србије је Јорgovanka Табаковић која се налази на тој позицији од 2012. године.
+Народна банка Србије је основана 1884. године као Привилегована народна банка Краљевине Србије.
 
-Microsoft Corporation, founded by Bill Gates and Paul Allen in 1975, is headquartered in Redmond, Washington.
-Satya Nadella currently serves as the CEO. Microsoft is famous for Windows, Office, and Azure cloud services.
+Универзитет у Београду је најстарији и највећи универзитет у Србији, основан 1808. године.
+Ректор Универзитета у Београду је професор Владан Ђокић.
+Универзитет има 31 факултет и више од 90.000 студената.
 
-Google LLC, founded by Larry Page and Sergey Brin in 1998, is based in Mountain View, California.
-Sundar Pichai is the current CEO. Google is known for its search engine, Android, and cloud computing services.
+Новак Ђоковић је српски тенисер рођен у Београду 1987. године.
+Ђоковић је освојио 24 Гренд слем титуле у појединачној конкуренцији.
+Тренутно живи у Монте Карлу, али редовно посећује Србију.
 
-Amazon.com, Inc., founded by Jeff Bezos in 1994, is headquartered in Seattle, Washington.
-Andy Jassy became CEO in 2021. Amazon is famous for e-commerce, AWS, and cloud computing services.
+Ниш је трећи по величини град у Србији, налази се на реци Нишави.
+Град Ниш има богату историју која сеже више од 2000 година уназад.
+Цар Константин Велики је рођен у Нишу у 3. веку.
 
-Tesla, Inc., founded by Elon Musk and others in 2003, is based in Austin, Texas.
-The company specializes in electric vehicles and clean energy products.
+Београд је главни град Србије и налази се на ушћу реке Саве у Дунав.
+Град Београд има преко 1.6 милиона становника и представља културни центар Србије.
 """
     
     # Repeat the text to make it large enough to demonstrate chunking
@@ -114,8 +117,8 @@ def test_small_text():
     
     nlp = spacy.blank("en")
     
-    text = """Apple Inc. is headquartered in Cupertino, California. 
-Tim Cook is the CEO. The company was founded by Steve Jobs in 1976."""
+    text = """Новак Ђоковић је српски тенисер рођен у Београду 1987. године. 
+Ђоковић је освојио 24 Гренд слем титуле. Тренутно живи у Монте Карлу."""
     
     print(f"\nProcessing small text ({len(text)} chars)...")
     
