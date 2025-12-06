@@ -59,9 +59,9 @@ def test_with_blank_model():
     print("INTEGRATION TEST: Using Blank spaCy Model")
     print("=" * 70)
     
-    # Create a blank English model
+    # Create a blank Serbian model
     print("\nCreating blank spaCy model...")
-    nlp = spacy.blank("en")
+    nlp = spacy.blank("sr")
     
     # Create sample text
     text = create_large_sample_text()
@@ -115,7 +115,7 @@ def test_small_text():
     print("INTEGRATION TEST: Small Text (No Chunking)")
     print("=" * 70)
     
-    nlp = spacy.blank("en")
+    nlp = spacy.blank("sr")
     
     text = """Новак Ђоковић је српски тенисер рођен у Београду 1987. године. 
 Ђоковић је освојио 24 Гренд слем титуле. Тренутно живи у Монте Карлу."""
