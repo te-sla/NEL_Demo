@@ -344,11 +344,12 @@ class NERDemoGUI:
                     self.progress_bar.stop()
                     self.progress_bar.config(mode="determinate", maximum=total)
                     self.progress_bar["value"] = completed
-                    status_message = (
-                        f"Processing chunk {completed + 1} of {total}..."
-                        if completed < total
-                        else "Merging chunked outputs..."
-                    )
+                    if completed == 0 and total > 0:
+                        status_message = f"Processing chunk 1 of {total}..."
+                    elif 0 < completed < total:
+                        status_message = f"Completed chunk {completed} of {total}..."
+                    else:
+                        status_message = "Merging chunked outputs..."
                     self.status_var.set(status_message)
                     self.root.update_idletasks()
 
