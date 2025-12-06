@@ -16,7 +16,17 @@ for efficient processing. This module helps handle larger documents by:
 
 from typing import List, Optional, Tuple
 import re
+import warnings
 from pathlib import Path
+
+# Try to import spacy's displacy for HTML rendering
+# This is optional and only needed for process_text_in_chunks function
+try:
+    from spacy import displacy
+    DISPLACY_AVAILABLE = True
+except ImportError:
+    DISPLACY_AVAILABLE = False
+    displacy = None
 
 
 # Default maximum chunk size (conservative estimate for spaCy)
@@ -188,7 +198,6 @@ def merge_html_outputs(html_chunks: List[str], title: str = "NER Output") -> str
                                  '--- Document Section Break ---</div>')
         else:
             # Log warning if chunk doesn't match expected pattern
-            import warnings
             warnings.warn(f"Chunk {i+1} doesn't match expected HTML pattern and will be skipped")
     
     # Build the merged HTML
@@ -247,7 +256,8 @@ def process_text_in_chunks(
     if not text or not text.strip():
         raise ValueError("text cannot be empty")
     
-    from spacy import displacy
+    if not DISPLACY_AVAILABLE:
+        raise ImportError("spacy.displacy is required for process_text_in_chunks. Please install spacy.")
     
     # Chunk the text
     chunks = chunk_text(text, max_chunk_size)
