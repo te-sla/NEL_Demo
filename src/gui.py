@@ -90,6 +90,9 @@ class ToolTip:
 class NERDemoGUI:
     """Main GUI application for NER+NEL demonstration."""
     
+    # Default language code for transliteration
+    DEFAULT_TRANSLITERATION_LANG = 'sr'
+    
     def __init__(self, root):
         """Initialize the GUI application.
         
@@ -458,7 +461,7 @@ class NERDemoGUI:
                     max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
                     output_path=output_file,
                     transliterate=use_transliteration,
-                    transliterate_lang='sr'
+                    transliterate_lang=self.DEFAULT_TRANSLITERATION_LANG
                 )
                 
                 # Display entities in results
@@ -508,11 +511,14 @@ class NERDemoGUI:
                 
                 if use_transliteration and transliterate_to_latin is not None:
                     try:
-                        text_to_process = transliterate_to_latin(text, 'sr')
-                    except ImportError as e:
+                        text_to_process = transliterate_to_latin(text, self.DEFAULT_TRANSLITERATION_LANG)
+                    except ImportError:
                         messagebox.showwarning(
-                            "Transliteration Warning",
-                            f"Could not transliterate text:\n{str(e)}\n\nProcessing original text instead."
+                            "Transliteration Unavailable",
+                            "The transliteration feature is not available.\n\n"
+                            "To enable this feature, install the required package:\n"
+                            "pip install cyrtranslit\n\n"
+                            "Processing will continue with the original text."
                         )
                         text_to_process = text
                 

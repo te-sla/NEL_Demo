@@ -44,6 +44,9 @@ except ImportError:
 # Default maximum chunk size (conservative estimate for spaCy)
 DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
 
+# Supported language codes for Cyrillic transliteration
+SUPPORTED_TRANSLITERATION_CODES = {'sr', 'me', 'mk', 'ru', 'uk', 'kk', 'bg'}
+
 
 def transliterate_to_latin(text: str, lang_code: str = 'sr') -> str:
     """
@@ -77,12 +80,10 @@ def transliterate_to_latin(text: str, lang_code: str = 'sr') -> str:
             "Install it with: pip install cyrtranslit"
         )
     
-    # List of supported language codes by cyrtranslit
-    supported_codes = {'sr', 'me', 'mk', 'ru', 'uk', 'kk', 'bg'}
-    if lang_code not in supported_codes:
+    if lang_code not in SUPPORTED_TRANSLITERATION_CODES:
         raise ValueError(
             f"Unsupported language code '{lang_code}'. "
-            f"Supported codes: {', '.join(sorted(supported_codes))}"
+            f"Supported codes: {', '.join(sorted(SUPPORTED_TRANSLITERATION_CODES))}"
         )
     
     return cyrtranslit.to_latin(text, lang_code)
