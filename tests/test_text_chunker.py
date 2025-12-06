@@ -341,6 +341,12 @@ class TestTransliteration:
         assert "123" in result
         assert "2024" in result
     
+    @pytest.mark.skipif(not CYRTRANSLIT_AVAILABLE, reason="cyrtranslit not installed")
+    def test_unsupported_language_code_raises_error(self):
+        """Test that unsupported language codes raise ValueError."""
+        with pytest.raises(ValueError, match="Unsupported language code"):
+            transliterate_to_latin("test", 'unsupported')
+    
     def test_transliterate_without_module_raises_error(self):
         """Test that transliteration raises error when module not available."""
         if CYRTRANSLIT_AVAILABLE:

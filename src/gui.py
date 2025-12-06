@@ -509,7 +509,7 @@ class NERDemoGUI:
                 if use_transliteration and transliterate_to_latin is not None:
                     try:
                         text_to_process = transliterate_to_latin(text, 'sr')
-                    except Exception as e:
+                    except ImportError as e:
                         messagebox.showwarning(
                             "Transliteration Warning",
                             f"Could not transliterate text:\n{str(e)}\n\nProcessing original text instead."

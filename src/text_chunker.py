@@ -56,12 +56,15 @@ def transliterate_to_latin(text: str, lang_code: str = 'sr') -> str:
     Args:
         text: The input text (may contain Cyrillic, Latin, or mixed)
         lang_code: Language code for transliteration (default: 'sr' for Serbian)
+                   Supported codes: 'sr' (Serbian), 'me' (Montenegrin), 'mk' (Macedonian), 
+                   'ru' (Russian), 'uk' (Ukrainian), 'kk' (Kazakh), 'bg' (Bulgarian)
         
     Returns:
         Text with Cyrillic characters converted to Latin
         
     Raises:
         ImportError: If cyrtranslit is not installed
+        ValueError: If an unsupported language code is provided
         
     Note:
         - If cyrtranslit is not available, this function will raise ImportError
@@ -72,6 +75,14 @@ def transliterate_to_latin(text: str, lang_code: str = 'sr') -> str:
         raise ImportError(
             "cyrtranslit is required for transliteration. "
             "Install it with: pip install cyrtranslit"
+        )
+    
+    # List of supported language codes by cyrtranslit
+    supported_codes = {'sr', 'me', 'mk', 'ru', 'uk', 'kk', 'bg'}
+    if lang_code not in supported_codes:
+        raise ValueError(
+            f"Unsupported language code '{lang_code}'. "
+            f"Supported codes: {', '.join(sorted(supported_codes))}"
         )
     
     return cyrtranslit.to_latin(text, lang_code)
