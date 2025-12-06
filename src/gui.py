@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
-"""
-NEL Demo - spaCy NER+NEL GUI Application
+"""NEL Demo - spaCy NER+NEL GUI Application.
 
-A simple GUI for demonstrating Named Entity Recognition (NER) and 
+A simple GUI for demonstrating Named Entity Recognition (NER) and
 Named Entity Linking (NEL) using spaCy models.
 """
 
-import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox, filedialog
-import os
-import sys
+from __future__ import annotations
+
 import subprocess
-from pathlib import Path
-from datetime import datetime
+import sys
 import webbrowser
+from datetime import datetime
+from pathlib import Path
+from tkinter import messagebox, scrolledtext, ttk
+from typing import TYPE_CHECKING, Optional
+import tkinter as tk
+
+if TYPE_CHECKING:
+    from spacy.language import Language
 
 # Add the project root to the path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -29,32 +33,71 @@ except ImportError:
 
 # Import text chunker module
 try:
-    from text_chunker import process_text_in_chunks, split_into_paragraphs, DEFAULT_MAX_CHUNK_SIZE
+    from text_chunker import (
+        DEFAULT_MAX_CHUNK_SIZE,
+        process_text_in_chunks,
+        split_into_paragraphs,
+    )
 except ImportError:
     print("Warning: text_chunker module not found. Large text processing may fail.")
-    process_text_in_chunks = None
-    split_into_paragraphs = None
+    process_text_in_chunks = None  # type: ignore
+    split_into_paragraphs = None  # type: ignore
     # Fallback value matches the default in text_chunker.py
     DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
 
-# Attribution URLs
+# Constants
 TESLA_URL = "https://tesla.rgf.bg.ac.rs/"
 JERTEH_URL = "https://jerteh.rs/"
+WINDOW_TITLE = "spaCy NER+NEL Demo"
+DEFAULT_WINDOW_SIZE = "900x700"
+DISPLAY_ENTITY_LIMIT = 100
+TOOLTIP_BG_COLOR = "#ffffe0"
+
+# Sample text for demonstration
+SAMPLE_TEXT = (
+    "Apple Inc. is an American multinational technology company headquartered "
+    "in Cupertino, California. Tim Cook is the CEO of Apple. The company was "
+    "founded by Steve Jobs, Steve Wozniak, and Ronald Wayne in 1976. "
+    "Apple is known for products like the iPhone, iPad, and Mac computers. "
+    "In 2024, Apple continued to innovate in artificial intelligence and "
+    "augmented reality technologies."
+)
 
 
 class ToolTip:
-    """Simple tooltip widget for tkinter labels."""
+    """Simple tooltip widget for tkinter labels.
     
-    def __init__(self, widget, text):
+    This class provides hover tooltips for tkinter widgets. The tooltip
+    appears when the mouse enters the widget and disappears when it leaves.
+    
+    Attributes:
+        widget: The tkinter widget to attach the tooltip to.
+        text: The text to display in the tooltip.
+        tooltip_window: The toplevel window used for the tooltip (None when not shown).
+    """
+    
+    def __init__(self, widget: tk.Widget, text: str) -> None:
+        """Initialize the tooltip.
+        
+        Args:
+            widget: The tkinter widget to attach the tooltip to.
+            text: The text to display in the tooltip.
+        """
         self.widget = widget
         self.text = text
-        self.tooltip_window = None
+        self.tooltip_window: Optional[tk.Toplevel] = None
         self.widget.bind("<Enter>", self.show_tooltip)
         self.widget.bind("<Leave>", self.hide_tooltip)
     
-    def show_tooltip(self, event=None):
+    def show_tooltip(self, event: Optional[tk.Event] = None) -> None:
+        """Show the tooltip window.
+        
+        Args:
+            event: The tkinter event (unused but required by bind).
+        """
         if self.tooltip_window or not self.text:
             return
+        
         x = self.widget.winfo_rootx() + 25
         y = self.widget.winfo_rooty() + self.widget.winfo_height() + 5
         
@@ -63,39 +106,57 @@ class ToolTip:
         tw.wm_geometry(f"+{x}+{y}")
         
         label = tk.Label(
-            tw, 
-            text=self.text, 
+            tw,
+            text=self.text,
             justify=tk.LEFT,
-            background="#ffffe0", 
-            relief=tk.SOLID, 
+            background=TOOLTIP_BG_COLOR,
+            relief=tk.SOLID,
             borderwidth=1,
             font=("Arial", 9)
         )
         label.pack()
     
-    def hide_tooltip(self, event=None):
+    def hide_tooltip(self, event: Optional[tk.Event] = None) -> None:
+        """Hide the tooltip window.
+        
+        Args:
+            event: The tkinter event (unused but required by bind).
+        """
         if self.tooltip_window:
             self.tooltip_window.destroy()
             self.tooltip_window = None
 
 
 class NERDemoGUI:
-    """Main GUI application for NER+NEL demonstration."""
+    """Main GUI application for NER+NEL demonstration.
     
-    def __init__(self, root):
+    This class provides a graphical user interface for loading spaCy models,
+    processing text, and visualizing named entity recognition results.
+    
+    Attributes:
+        root: The root tkinter window.
+        nlp: The loaded spaCy language model (None if no model is loaded).
+        model_name: Name of the currently loaded model (None if no model is loaded).
+        output_dir: Path to the directory where output HTML files are saved.
+        models_dir: Path to the directory containing spaCy models.
+        last_output_file: Path to the most recently generated output file.
+    """
+    
+    def __init__(self, root: tk.Tk) -> None:
         """Initialize the GUI application.
         
         Args:
-            root: The root tkinter window
+            root: The root tkinter window.
         """
         self.root = root
-        self.root.title("spaCy NER+NEL Demo")
-        self.root.geometry("900x700")
+        self.root.title(WINDOW_TITLE)
+        self.root.geometry(DEFAULT_WINDOW_SIZE)
         
-        self.nlp = None
-        self.model_name = None
+        self.nlp: Optional["Language"] = None
+        self.model_name: Optional[str] = None
         self.output_dir = PROJECT_ROOT / "data" / "outputs"
         self.models_dir = PROJECT_ROOT / "models"
+        self.last_output_file: Optional[Path] = None
         
         # Ensure output directory exists
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -103,7 +164,7 @@ class NERDemoGUI:
         self.create_widgets()
         self.check_models()
         
-    def create_widgets(self):
+    def create_widgets(self) -> None:
         """Create and layout all GUI widgets."""
         # Title
         title_label = tk.Label(
@@ -259,8 +320,13 @@ class NERDemoGUI:
         )
         status_bar.pack(fill=tk.X, side=tk.BOTTOM)
         
-    def check_models(self):
-        """Check for available models in the models directory."""
+    def check_models(self) -> None:
+        """Check for available models in the models directory.
+        
+        This method scans the models directory for trained spaCy models and
+        populates the model selection dropdown. Models should be in the format:
+        models/{model_name}/model-best/
+        """
         self.model_combo['values'] = []
         
         if not self.models_dir.exists():
@@ -293,8 +359,12 @@ class NERDemoGUI:
                 "python -m spacy download en_core_web_sm"
             )
     
-    def load_model(self):
-        """Load the selected spaCy model."""
+    def load_model(self) -> None:
+        """Load the selected spaCy model.
+        
+        This method loads the model selected in the dropdown and displays
+        its metadata in the results area.
+        """
         model_name = self.model_var.get()
         
         if not model_name:
@@ -341,22 +411,127 @@ class NERDemoGUI:
             )
             self.status_var.set("Error loading model")
     
-    def load_sample_text(self):
+    def load_sample_text(self) -> None:
         """Load sample text for demonstration."""
-        sample_text = (
-            "Apple Inc. is an American multinational technology company headquartered "
-            "in Cupertino, California. Tim Cook is the CEO of Apple. The company was "
-            "founded by Steve Jobs, Steve Wozniak, and Ronald Wayne in 1976. "
-            "Apple is known for products like the iPhone, iPad, and Mac computers. "
-            "In 2024, Apple continued to innovate in artificial intelligence and "
-            "augmented reality technologies."
-        )
         self.input_text.delete(1.0, tk.END)
-        self.input_text.insert(1.0, sample_text)
+        self.input_text.insert(1.0, SAMPLE_TEXT)
         self.status_var.set("Sample text loaded")
     
-    def process_text(self):
-        """Process the input text and display NER results."""
+    def _display_entities(self, entities: list, is_chunked: bool = False) -> None:
+        """Display entities in the results text widget.
+        
+        Args:
+            entities: List of spaCy entity objects to display.
+            is_chunked: Whether the entities came from chunked processing.
+        """
+        self.results_text.delete(1.0, tk.END)
+        
+        title = "Named Entities Found (Chunked Processing):" if is_chunked else "Named Entities Found:"
+        self.results_text.insert(tk.END, title + "\n")
+        self.results_text.insert(tk.END, "=" * 60 + "\n\n")
+        
+        if entities:
+            # Show first DISPLAY_ENTITY_LIMIT entities to avoid overwhelming the UI
+            for i, ent in enumerate(entities[:DISPLAY_ENTITY_LIMIT]):
+                self.results_text.insert(
+                    tk.END,
+                    f"Text: {ent.text:20} | Label: {ent.label_:10} | "
+                    f"Start: {ent.start_char:4} | End: {ent.end_char:4}\n"
+                )
+                # If entity has KB ID (for NEL)
+                if hasattr(ent, 'kb_id_') and ent.kb_id_:
+                    self.results_text.insert(tk.END, f"  KB ID: {ent.kb_id_}\n")
+            
+            if len(entities) > DISPLAY_ENTITY_LIMIT:
+                self.results_text.insert(
+                    tk.END,
+                    f"\n... and {len(entities) - DISPLAY_ENTITY_LIMIT} more entities\n"
+                )
+        else:
+            self.results_text.insert(tk.END, "No entities found.\n")
+        
+        self.results_text.insert(tk.END, f"\n\nTotal entities: {len(entities)}\n")
+    
+    def _process_chunked_text(self, text: str, paragraphs: list) -> None:
+        """Process text using chunking for multi-paragraph texts.
+        
+        Args:
+            text: The text to process.
+            paragraphs: List of paragraphs in the text.
+        """
+        text_length = len(text)
+        self.status_var.set(
+            f"Processing text ({text_length:,} chars, {len(paragraphs)} paragraphs) in chunks..."
+        )
+        self.root.update()
+        
+        # Save output file path
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_file = self.output_dir / f"ner_output_{timestamp}.html"
+        
+        # Process text in chunks
+        all_entities, html, num_chunks = process_text_in_chunks(
+            self.nlp,
+            text,
+            max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
+            output_path=output_file
+        )
+        
+        # Display entities in results
+        self._display_entities(all_entities, is_chunked=True)
+        self.results_text.insert(
+            tk.END,
+            f"Text was split into {num_chunks} chunk(s) from {len(paragraphs)} paragraph(s) for better context.\n"
+        )
+        
+        self.last_output_file = output_file
+        self.status_var.set(f"Processing complete. Output saved to: {output_file.name}")
+        
+        messagebox.showinfo(
+            "Processing Complete",
+            f"Found {len(all_entities)} entities in {text_length:,} characters.\n\n"
+            f"Processed as {num_chunks} chunk(s) from {len(paragraphs)} paragraph(s) for better context.\n\n"
+            f"HTML visualization saved to:\n{output_file.name}\n\n"
+            "Click 'View Last Output' to open in browser."
+        )
+    
+    def _process_single_text(self, text: str) -> None:
+        """Process text normally (single paragraph or no chunking available).
+        
+        Args:
+            text: The text to process.
+        """
+        doc = self.nlp(text)
+        
+        # Display entities in results
+        self._display_entities(list(doc.ents), is_chunked=False)
+        
+        # Generate HTML visualization with displaCy
+        html = displacy.render(doc, style="ent", page=True)
+        
+        # Save HTML to output directory
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_file = self.output_dir / f"ner_output_{timestamp}.html"
+        
+        with open(output_file, "w", encoding="utf-8") as f:
+            f.write(html)
+        
+        self.last_output_file = output_file
+        self.status_var.set(f"Processing complete. Output saved to: {output_file.name}")
+        
+        messagebox.showinfo(
+            "Processing Complete",
+            f"Found {len(doc.ents)} entities.\n\n"
+            f"HTML visualization saved to:\n{output_file.name}\n\n"
+            "Click 'View Last Output' to open in browser."
+        )
+    
+    def process_text(self) -> None:
+        """Process the input text and display NER results.
+        
+        This method handles both chunked processing (for multi-paragraph texts)
+        and normal processing (for single paragraphs).
+        """
         if self.nlp is None:
             messagebox.showwarning(
                 "No Model Loaded",
@@ -378,7 +553,6 @@ class NERDemoGUI:
             self.root.update()
             
             # Check if text has multiple paragraphs (chunking improves NER with paragraph context)
-            text_length = len(text)
             if split_into_paragraphs is not None:
                 paragraphs = split_into_paragraphs(text)
             else:
@@ -389,103 +563,10 @@ class NERDemoGUI:
             
             if has_multiple_paragraphs and process_text_in_chunks is not None:
                 # Use chunking for multi-paragraph texts
-                self.status_var.set(f"Processing text ({text_length:,} chars, {len(paragraphs)} paragraphs) in chunks...")
-                self.root.update()
-                
-                # Save output file path
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_file = self.output_dir / f"ner_output_{timestamp}.html"
-                
-                # Process text in chunks
-                all_entities, html, num_chunks = process_text_in_chunks(
-                    self.nlp, 
-                    text, 
-                    max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
-                    output_path=output_file
-                )
-                
-                # Display entities in results
-                self.results_text.delete(1.0, tk.END)
-                self.results_text.insert(tk.END, "Named Entities Found (Chunked Processing):\n")
-                self.results_text.insert(tk.END, "=" * 60 + "\n\n")
-                
-                if all_entities:
-                    # Show first 100 entities to avoid overwhelming the UI
-                    display_limit = 100
-                    for i, ent in enumerate(all_entities[:display_limit]):
-                        self.results_text.insert(
-                            tk.END,
-                            f"Text: {ent.text:20} | Label: {ent.label_:10} | "
-                            f"Start: {ent.start_char:4} | End: {ent.end_char:4}\n"
-                        )
-                        # If entity has KB ID (for NEL)
-                        if hasattr(ent, 'kb_id_') and ent.kb_id_:
-                            self.results_text.insert(tk.END, f"  KB ID: {ent.kb_id_}\n")
-                    
-                    if len(all_entities) > display_limit:
-                        self.results_text.insert(
-                            tk.END, 
-                            f"\n... and {len(all_entities) - display_limit} more entities\n"
-                        )
-                else:
-                    self.results_text.insert(tk.END, "No entities found.\n")
-                
-                self.results_text.insert(tk.END, f"\n\nTotal entities: {len(all_entities)}\n")
-                self.results_text.insert(tk.END, f"Text was split into {num_chunks} chunk(s) from {len(paragraphs)} paragraph(s) for better context.\n")
-                
-                self.last_output_file = output_file
-                self.status_var.set(f"Processing complete. Output saved to: {output_file.name}")
-                
-                messagebox.showinfo(
-                    "Processing Complete",
-                    f"Found {len(all_entities)} entities in {text_length:,} characters.\n\n"
-                    f"Processed as {num_chunks} chunk(s) from {len(paragraphs)} paragraph(s) for better context.\n\n"
-                    f"HTML visualization saved to:\n{output_file.name}\n\n"
-                    "Click 'View Last Output' to open in browser."
-                )
+                self._process_chunked_text(text, paragraphs)
             else:
                 # Process text normally (single paragraph or no chunking available)
-                doc = self.nlp(text)
-                
-                # Display entities in results
-                self.results_text.delete(1.0, tk.END)
-                self.results_text.insert(tk.END, "Named Entities Found:\n")
-                self.results_text.insert(tk.END, "=" * 60 + "\n\n")
-                
-                if doc.ents:
-                    for ent in doc.ents:
-                        self.results_text.insert(
-                            tk.END,
-                            f"Text: {ent.text:20} | Label: {ent.label_:10} | "
-                            f"Start: {ent.start_char:4} | End: {ent.end_char:4}\n"
-                        )
-                        # If entity has KB ID (for NEL)
-                        if hasattr(ent, 'kb_id_') and ent.kb_id_:
-                            self.results_text.insert(tk.END, f"  KB ID: {ent.kb_id_}\n")
-                else:
-                    self.results_text.insert(tk.END, "No entities found.\n")
-                
-                self.results_text.insert(tk.END, f"\n\nTotal entities: {len(doc.ents)}\n")
-                
-                # Generate HTML visualization with displaCy
-                html = displacy.render(doc, style="ent", page=True)
-                
-                # Save HTML to output directory
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_file = self.output_dir / f"ner_output_{timestamp}.html"
-                
-                with open(output_file, "w", encoding="utf-8") as f:
-                    f.write(html)
-                
-                self.last_output_file = output_file
-                self.status_var.set(f"Processing complete. Output saved to: {output_file.name}")
-                
-                messagebox.showinfo(
-                    "Processing Complete",
-                    f"Found {len(doc.ents)} entities.\n\n"
-                    f"HTML visualization saved to:\n{output_file.name}\n\n"
-                    "Click 'View Last Output' to open in browser."
-                )
+                self._process_single_text(text)
             
         except Exception as e:
             messagebox.showerror(
@@ -494,9 +575,9 @@ class NERDemoGUI:
             )
             self.status_var.set("Error processing text")
     
-    def view_last_output(self):
+    def view_last_output(self) -> None:
         """Open the last generated HTML output in the default browser."""
-        if hasattr(self, 'last_output_file') and self.last_output_file.exists():
+        if self.last_output_file and self.last_output_file.exists():
             webbrowser.open(f"file://{self.last_output_file.absolute()}")
             self.status_var.set(f"Opened: {self.last_output_file.name}")
         else:
@@ -511,7 +592,7 @@ class NERDemoGUI:
                     "No output files found. Process some text first."
                 )
     
-    def open_output_folder(self):
+    def open_output_folder(self) -> None:
         """Open the output folder in the system file explorer."""
         try:
             if sys.platform == 'win32':
@@ -521,7 +602,7 @@ class NERDemoGUI:
             else:  # Linux
                 subprocess.run(['xdg-open', str(self.output_dir)], check=False)
             
-            self.status_var.set(f"Opened output folder")
+            self.status_var.set("Opened output folder")
         except Exception as e:
             messagebox.showerror(
                 "Error",
@@ -529,7 +610,7 @@ class NERDemoGUI:
             )
 
 
-def main():
+def main() -> None:
     """Main entry point for the application."""
     root = tk.Tk()
     app = NERDemoGUI(root)
