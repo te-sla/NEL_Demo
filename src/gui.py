@@ -37,6 +37,47 @@ except ImportError:
     # Fallback value matches the default in text_chunker.py
     DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
 
+# Attribution URLs
+TESLA_URL = "https://tesla.rgf.bg.ac.rs/"
+JERTEH_URL = "https://jerteh.rs/"
+
+
+class ToolTip:
+    """Simple tooltip widget for tkinter labels."""
+    
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tooltip_window = None
+        self.widget.bind("<Enter>", self.show_tooltip)
+        self.widget.bind("<Leave>", self.hide_tooltip)
+    
+    def show_tooltip(self, event=None):
+        if self.tooltip_window or not self.text:
+            return
+        x = self.widget.winfo_rootx() + 25
+        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 5
+        
+        self.tooltip_window = tw = tk.Toplevel(self.widget)
+        tw.wm_overrideredirect(True)
+        tw.wm_geometry(f"+{x}+{y}")
+        
+        label = tk.Label(
+            tw, 
+            text=self.text, 
+            justify=tk.LEFT,
+            background="#ffffe0", 
+            relief=tk.SOLID, 
+            borderwidth=1,
+            font=("Arial", 9)
+        )
+        label.pack()
+    
+    def hide_tooltip(self, event=None):
+        if self.tooltip_window:
+            self.tooltip_window.destroy()
+            self.tooltip_window = None
+
 
 class NERDemoGUI:
     """Main GUI application for NER+NEL demonstration."""
@@ -73,6 +114,48 @@ class NERDemoGUI:
         )
         title_label.pack()
         
+        # Attribution
+        attribution_frame = tk.Frame(self.root)
+        attribution_frame.pack()
+        
+        made_by_label = tk.Label(
+            attribution_frame,
+            text="Made by ",
+            font=("Arial", 9),
+            fg="#808080"
+        )
+        made_by_label.pack(side=tk.LEFT)
+        
+        tesla_link = tk.Label(
+            attribution_frame,
+            text="TESLA",
+            font=("Arial", 9, "underline"),
+            fg="#0066CC",
+            cursor="hand2"
+        )
+        tesla_link.pack(side=tk.LEFT)
+        tesla_link.bind("<Button-1>", lambda e: webbrowser.open(TESLA_URL))
+        ToolTip(tesla_link, "TESLA - Text Embeddings - Serbian Language Applications\nClick to visit: https://tesla.rgf.bg.ac.rs/")
+        
+        and_label = tk.Label(
+            attribution_frame,
+            text=" and ",
+            font=("Arial", 9),
+            fg="#808080"
+        )
+        and_label.pack(side=tk.LEFT)
+        
+        jerteh_link = tk.Label(
+            attribution_frame,
+            text="Jerteh",
+            font=("Arial", 9, "underline"),
+            fg="#0066CC",
+            cursor="hand2"
+        )
+        jerteh_link.pack(side=tk.LEFT)
+        jerteh_link.bind("<Button-1>", lambda e: webbrowser.open(JERTEH_URL))
+        ToolTip(jerteh_link, "Language Resources and Technologies Society - Jerteh\nClick to visit: https://jerteh.rs/")
+
         # Model selection frame
         model_frame = ttk.LabelFrame(self.root, text="Model Selection", padding=10)
         model_frame.pack(fill=tk.X, padx=10, pady=5)
