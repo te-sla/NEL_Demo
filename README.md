@@ -34,6 +34,8 @@ NEL_Demo/
 ├── models/                 # Place your trained models here
 │   └── {model_name}/
 │       └── model-best/     # Your trained spaCy model
+├── inputs/                 # Input text files
+│   └── sample_text.txt     # Sample text file
 ├── data/
 │   └── outputs/            # HTML visualization outputs
 └── venv/                   # Virtual environment (created by installer)
@@ -155,6 +157,7 @@ python src/gui.py
 2. **Enter Text**:
    - Type or paste text into the input area
    - Or click "Load Sample Text" for a demo
+   - Or click "Load from File" to load a text file from the `inputs/` folder
 
 3. **Process Text**:
    - Click "Process Text (NER)" to analyze the text
