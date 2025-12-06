@@ -29,11 +29,19 @@ except ImportError:
 
 # Import text chunker module
 try:
-    from text_chunker import process_text_in_chunks, split_into_paragraphs, DEFAULT_MAX_CHUNK_SIZE
+    from text_chunker import (
+        process_text_in_chunks, 
+        split_into_paragraphs, 
+        chunk_text,
+        merge_html_outputs,
+        DEFAULT_MAX_CHUNK_SIZE
+    )
 except ImportError:
     print("Warning: text_chunker module not found. Large text processing may fail.")
     process_text_in_chunks = None
     split_into_paragraphs = None
+    chunk_text = None
+    merge_html_outputs = None
     # Fallback value matches the default in text_chunker.py
     DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
 
@@ -425,10 +433,6 @@ class NERDemoGUI:
                 self.status_var.set(f"Processing text ({text_length:,} chars, {len(paragraphs)} paragraphs) in chunks...")
                 self.progress_var.set(20)
                 self.root.update()
-                
-                # Import chunking functions
-                from text_chunker import chunk_text, merge_html_outputs
-                from spacy import displacy
                 
                 # Save output file path
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
