@@ -37,6 +37,10 @@ except ImportError:
     # Fallback value matches the default in text_chunker.py
     DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
 
+# Attribution text
+ATTRIBUTION_TEXT = ("Made by TESLA - Text Embeddings - Serbian Language Applications\n"
+                    "and Language Resources and Technologies Society - Jerteh")
+
 
 class NERDemoGUI:
     """Main GUI application for NER+NEL demonstration."""
@@ -76,9 +80,9 @@ class NERDemoGUI:
         # Attribution
         attribution_label = tk.Label(
             self.root,
-            text="Made by TESLA - Text Embeddings - Serbian Language Applications\nand Language Resources and Technologies Society - Jerteh",
+            text=ATTRIBUTION_TEXT,
             font=("Arial", 9),
-            fg="gray"
+            fg="#808080"
         )
         attribution_label.pack()
         
