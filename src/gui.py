@@ -27,6 +27,16 @@ except ImportError:
     print("Please run the installer script (install.ps1 or install.sh) first.")
     sys.exit(1)
 
+# Import text chunker module
+try:
+    from text_chunker import process_text_in_chunks, split_into_paragraphs, DEFAULT_MAX_CHUNK_SIZE
+except ImportError:
+    print("Warning: text_chunker module not found. Large text processing may fail.")
+    process_text_in_chunks = None
+    split_into_paragraphs = None
+    # Fallback value matches the default in text_chunker.py
+    DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
+
 
 class NERDemoGUI:
     """Main GUI application for NER+NEL demonstration."""
@@ -284,48 +294,115 @@ class NERDemoGUI:
             self.status_var.set("Processing text...")
             self.root.update()
             
-            # Process text with spaCy
-            doc = self.nlp(text)
-            
-            # Display entities in results
-            self.results_text.delete(1.0, tk.END)
-            self.results_text.insert(tk.END, "Named Entities Found:\n")
-            self.results_text.insert(tk.END, "=" * 60 + "\n\n")
-            
-            if doc.ents:
-                for ent in doc.ents:
-                    self.results_text.insert(
-                        tk.END,
-                        f"Text: {ent.text:20} | Label: {ent.label_:10} | "
-                        f"Start: {ent.start_char:4} | End: {ent.end_char:4}\n"
-                    )
-                    # If entity has KB ID (for NEL)
-                    if hasattr(ent, 'kb_id_') and ent.kb_id_:
-                        self.results_text.insert(tk.END, f"  KB ID: {ent.kb_id_}\n")
+            # Check if text has multiple paragraphs (chunking improves NER with paragraph context)
+            text_length = len(text)
+            if split_into_paragraphs is not None:
+                paragraphs = split_into_paragraphs(text)
             else:
-                self.results_text.insert(tk.END, "No entities found.\n")
+                # Fallback paragraph detection if text_chunker module failed to import
+                paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
             
-            self.results_text.insert(tk.END, f"\n\nTotal entities: {len(doc.ents)}\n")
+            has_multiple_paragraphs = len(paragraphs) > 1
             
-            # Generate HTML visualization with displaCy
-            html = displacy.render(doc, style="ent", page=True)
-            
-            # Save HTML to output directory
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_file = self.output_dir / f"ner_output_{timestamp}.html"
-            
-            with open(output_file, "w", encoding="utf-8") as f:
-                f.write(html)
-            
-            self.last_output_file = output_file
-            self.status_var.set(f"Processing complete. Output saved to: {output_file.name}")
-            
-            messagebox.showinfo(
-                "Processing Complete",
-                f"Found {len(doc.ents)} entities.\n\n"
-                f"HTML visualization saved to:\n{output_file.name}\n\n"
-                "Click 'View Last Output' to open in browser."
-            )
+            if has_multiple_paragraphs and process_text_in_chunks is not None:
+                # Use chunking for multi-paragraph texts
+                self.status_var.set(f"Processing text ({text_length:,} chars, {len(paragraphs)} paragraphs) in chunks...")
+                self.root.update()
+                
+                # Save output file path
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                output_file = self.output_dir / f"ner_output_{timestamp}.html"
+                
+                # Process text in chunks
+                all_entities, html, num_chunks = process_text_in_chunks(
+                    self.nlp, 
+                    text, 
+                    max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
+                    output_path=output_file
+                )
+                
+                # Display entities in results
+                self.results_text.delete(1.0, tk.END)
+                self.results_text.insert(tk.END, "Named Entities Found (Chunked Processing):\n")
+                self.results_text.insert(tk.END, "=" * 60 + "\n\n")
+                
+                if all_entities:
+                    # Show first 100 entities to avoid overwhelming the UI
+                    display_limit = 100
+                    for i, ent in enumerate(all_entities[:display_limit]):
+                        self.results_text.insert(
+                            tk.END,
+                            f"Text: {ent.text:20} | Label: {ent.label_:10} | "
+                            f"Start: {ent.start_char:4} | End: {ent.end_char:4}\n"
+                        )
+                        # If entity has KB ID (for NEL)
+                        if hasattr(ent, 'kb_id_') and ent.kb_id_:
+                            self.results_text.insert(tk.END, f"  KB ID: {ent.kb_id_}\n")
+                    
+                    if len(all_entities) > display_limit:
+                        self.results_text.insert(
+                            tk.END, 
+                            f"\n... and {len(all_entities) - display_limit} more entities\n"
+                        )
+                else:
+                    self.results_text.insert(tk.END, "No entities found.\n")
+                
+                self.results_text.insert(tk.END, f"\n\nTotal entities: {len(all_entities)}\n")
+                self.results_text.insert(tk.END, f"Text was split into {num_chunks} chunk(s) from {len(paragraphs)} paragraph(s) for better context.\n")
+                
+                self.last_output_file = output_file
+                self.status_var.set(f"Processing complete. Output saved to: {output_file.name}")
+                
+                messagebox.showinfo(
+                    "Processing Complete",
+                    f"Found {len(all_entities)} entities in {text_length:,} characters.\n\n"
+                    f"Processed as {num_chunks} chunk(s) from {len(paragraphs)} paragraph(s) for better context.\n\n"
+                    f"HTML visualization saved to:\n{output_file.name}\n\n"
+                    "Click 'View Last Output' to open in browser."
+                )
+            else:
+                # Process text normally (single paragraph or no chunking available)
+                doc = self.nlp(text)
+                
+                # Display entities in results
+                self.results_text.delete(1.0, tk.END)
+                self.results_text.insert(tk.END, "Named Entities Found:\n")
+                self.results_text.insert(tk.END, "=" * 60 + "\n\n")
+                
+                if doc.ents:
+                    for ent in doc.ents:
+                        self.results_text.insert(
+                            tk.END,
+                            f"Text: {ent.text:20} | Label: {ent.label_:10} | "
+                            f"Start: {ent.start_char:4} | End: {ent.end_char:4}\n"
+                        )
+                        # If entity has KB ID (for NEL)
+                        if hasattr(ent, 'kb_id_') and ent.kb_id_:
+                            self.results_text.insert(tk.END, f"  KB ID: {ent.kb_id_}\n")
+                else:
+                    self.results_text.insert(tk.END, "No entities found.\n")
+                
+                self.results_text.insert(tk.END, f"\n\nTotal entities: {len(doc.ents)}\n")
+                
+                # Generate HTML visualization with displaCy
+                html = displacy.render(doc, style="ent", page=True)
+                
+                # Save HTML to output directory
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                output_file = self.output_dir / f"ner_output_{timestamp}.html"
+                
+                with open(output_file, "w", encoding="utf-8") as f:
+                    f.write(html)
+                
+                self.last_output_file = output_file
+                self.status_var.set(f"Processing complete. Output saved to: {output_file.name}")
+                
+                messagebox.showinfo(
+                    "Processing Complete",
+                    f"Found {len(doc.ents)} entities.\n\n"
+                    f"HTML visualization saved to:\n{output_file.name}\n\n"
+                    "Click 'View Last Output' to open in browser."
+                )
             
         except Exception as e:
             messagebox.showerror(

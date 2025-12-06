@@ -11,8 +11,10 @@ A simple demonstration application for Named Entity Recognition (NER) and Named 
 - ✅ **Simple GUI**: User-friendly interface built with tkinter
 - ✅ **Model Management**: Load custom trained models from the `models/` directory
 - ✅ **Text Processing**: Process any text and extract named entities
+- ✅ **Smart Text Chunking**: Automatically handles large texts by chunking on paragraph boundaries
 - ✅ **Visual Output**: Generate beautiful HTML visualizations using displaCy
 - ✅ **Output Management**: Save all outputs to `data/outputs/` with timestamps
+- ✅ **Comprehensive Testing**: Full test suite with pytest
 
 ## Project Structure
 
@@ -23,7 +25,10 @@ NEL_Demo/
 ├── requirements.txt         # Python dependencies
 ├── README.md               # This file
 ├── src/
-│   └── gui.py              # Main GUI application
+│   ├── gui.py              # Main GUI application
+│   └── text_chunker.py     # Text chunking module for large documents
+├── tests/
+│   └── test_text_chunker.py # Test suite for text chunking
 ├── models/                 # Place your trained models here
 │   └── {model_name}/
 │       └── model-best/     # Your trained spaCy model
@@ -173,6 +178,17 @@ The application will:
 - Generate an HTML visualization with highlighted entities
 - Save the output to `data/outputs/ner_output_YYYYMMDD_HHMMSS.html`
 
+### Text Processing with Paragraph Chunking
+
+The application automatically uses chunking for any text with multiple paragraphs:
+- **Smart Chunking**: Paragraphs are grouped into appropriately sized chunks (up to 100K chars each) to preserve logical structure and improve NER accuracy
+- **Automatic Processing**: Each chunk is processed separately with spaCy NER
+- **Merged Output**: All chunks are combined into a single HTML visualization
+- **Visual Separation**: Section breaks are added between chunks in the output
+- **Better Context**: Processing text with paragraph boundaries helps spaCy maintain clearer context for entity recognition
+
+Single-paragraph texts are processed normally without chunking overhead. This approach ensures optimal NER performance while maintaining the readability and structure of the original text.
+
 ## Output Format
 
 Each processed text generates an HTML file with:
@@ -238,6 +254,40 @@ Core dependencies (installed automatically):
 
 Optional:
 - `spacy-transformers` - For transformer-based models
+
+Development dependencies:
+- `pytest` - For running tests
+
+## Testing
+
+The project includes comprehensive tests for the text chunking functionality.
+
+To run the tests:
+
+```bash
+# Activate the virtual environment first
+# Windows:
+.\venv\Scripts\Activate.ps1
+
+# Linux/Mac:
+source venv/bin/activate
+
+# Install pytest (if not already installed)
+pip install pytest
+
+# Run all tests
+python -m pytest tests/test_text_chunker.py -v
+
+# Run specific test class
+python -m pytest tests/test_text_chunker.py::TestChunkText -v
+```
+
+The test suite includes:
+- **Paragraph splitting tests**: Verify correct handling of various paragraph formats
+- **Text chunking tests**: Ensure proper chunking at different size limits
+- **HTML merging tests**: Validate correct merging of multiple HTML outputs
+- **Edge case tests**: Test Unicode, special characters, very long sentences
+- **Integration tests**: End-to-end workflow validation
 
 ## License
 

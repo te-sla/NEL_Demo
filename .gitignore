@@ -209,3 +209,4 @@ __marimo__/
 # Project specific
 data/outputs/
 models/*/
+temp_test_output.html
