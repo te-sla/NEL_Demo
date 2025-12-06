@@ -16,7 +16,7 @@ import spacy
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from text_chunker import DEFAULT_MAX_CHUNK_SIZE, chunk_text, process_text_in_chunks
+from text_chunker import chunk_text, process_text_in_chunks
 
 
 def _build_rule_based_nlp():
