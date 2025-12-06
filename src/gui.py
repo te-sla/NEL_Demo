@@ -372,10 +372,11 @@ class NERDemoGUI:
     
     def load_text_from_file(self):
         """Load text from a file using file dialog."""
-        # Open file dialog starting in the inputs directory
+        # Open file dialog starting in the inputs directory if it exists
+        initial_dir = self.inputs_dir if self.inputs_dir.exists() else None
         file_path = filedialog.askopenfilename(
             title="Select Text File",
-            initialdir=self.inputs_dir,
+            initialdir=initial_dir,
             filetypes=[
                 ("Text Files", "*.txt"),
                 ("All Files", "*.*")
@@ -384,9 +385,14 @@ class NERDemoGUI:
         
         if file_path:
             try:
-                # Read the file
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    text = f.read()
+                # Try to read the file with UTF-8 encoding first
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        text = f.read()
+                except UnicodeDecodeError:
+                    # Fallback to system default encoding if UTF-8 fails
+                    with open(file_path, 'r', encoding='latin-1') as f:
+                        text = f.read()
                 
                 # Load into text area
                 self.input_text.delete(1.0, tk.END)
