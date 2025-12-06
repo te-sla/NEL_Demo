@@ -12,6 +12,10 @@ for efficient processing. This module helps handle larger documents by:
 1. Splitting text into manageable chunks
 2. Processing each chunk separately
 3. Merging the HTML outputs into a cohesive visualization
+
+Additionally, this module provides Cyrillic to Latin transliteration for texts
+primarily written in Cyrillic script, which is useful when the NER model was
+trained on Latin script.
 """
 
 from typing import List, Optional, Tuple
@@ -28,9 +32,49 @@ except ImportError:
     DISPLACY_AVAILABLE = False
     displacy = None
 
+# Try to import cyrtranslit for Cyrillic-to-Latin transliteration
+try:
+    import cyrtranslit
+    CYRTRANSLIT_AVAILABLE = True
+except ImportError:
+    CYRTRANSLIT_AVAILABLE = False
+    cyrtranslit = None
+
 
 # Default maximum chunk size (conservative estimate for spaCy)
 DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
+
+
+def transliterate_to_latin(text: str, lang_code: str = 'sr') -> str:
+    """
+    Transliterate Cyrillic text to Latin script.
+    
+    This function uses the cyrtranslit library to convert Cyrillic characters
+    to their Latin equivalents. This is useful when the NER model was trained
+    on Latin script but the input text is in Cyrillic.
+    
+    Args:
+        text: The input text (may contain Cyrillic, Latin, or mixed)
+        lang_code: Language code for transliteration (default: 'sr' for Serbian)
+        
+    Returns:
+        Text with Cyrillic characters converted to Latin
+        
+    Raises:
+        ImportError: If cyrtranslit is not installed
+        
+    Note:
+        - If cyrtranslit is not available, this function will raise ImportError
+        - Text already in Latin script will be preserved
+        - Mixed Cyrillic/Latin text is supported
+    """
+    if not CYRTRANSLIT_AVAILABLE:
+        raise ImportError(
+            "cyrtranslit is required for transliteration. "
+            "Install it with: pip install cyrtranslit"
+        )
+    
+    return cyrtranslit.to_latin(text, lang_code)
 
 
 def split_into_paragraphs(text: str) -> List[str]:
@@ -223,23 +267,28 @@ def process_text_in_chunks(
     nlp,
     text: str,
     max_chunk_size: int = DEFAULT_MAX_CHUNK_SIZE,
-    output_path: Optional[Path] = None
+    output_path: Optional[Path] = None,
+    transliterate: bool = False,
+    transliterate_lang: str = 'sr'
 ) -> Tuple[List, str, int]:
     """
     Process text in chunks using spaCy NLP pipeline and merge results.
     
     This is a convenience function that:
-    1. Chunks the input text
-    2. Processes each chunk with spaCy
-    3. Generates HTML visualizations
-    4. Merges the HTML outputs
-    5. Optionally saves to a file
+    1. Optionally transliterates Cyrillic text to Latin
+    2. Chunks the input text
+    3. Processes each chunk with spaCy
+    4. Generates HTML visualizations
+    5. Merges the HTML outputs
+    6. Optionally saves to a file
     
     Args:
         nlp: spaCy language model instance
         text: Input text to process
         max_chunk_size: Maximum chunk size in characters
         output_path: Optional path to save merged HTML output
+        transliterate: If True, transliterate Cyrillic to Latin before processing
+        transliterate_lang: Language code for transliteration (default: 'sr')
         
     Returns:
         Tuple of (all_entities, merged_html, num_chunks)
@@ -249,6 +298,7 @@ def process_text_in_chunks(
         
     Raises:
         ValueError: If nlp is None or text is empty
+        ImportError: If transliterate=True but cyrtranslit is not installed
     """
     if nlp is None:
         raise ValueError("nlp model cannot be None")
@@ -258,6 +308,10 @@ def process_text_in_chunks(
     
     if not DISPLACY_AVAILABLE:
         raise ImportError("spacy.displacy is required for process_text_in_chunks. Please install spacy.")
+    
+    # Transliterate if requested
+    if transliterate:
+        text = transliterate_to_latin(text, transliterate_lang)
     
     # Chunk the text
     chunks = chunk_text(text, max_chunk_size)
