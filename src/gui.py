@@ -37,9 +37,11 @@ except ImportError:
     # Fallback value matches the default in text_chunker.py
     DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
 
-# Attribution text
+# Attribution text and URLs
 ATTRIBUTION_TEXT = ("Made by TESLA - Text Embeddings - Serbian Language Applications\n"
                     "and Language Resources and Technologies Society - Jerteh")
+TESLA_URL = "https://tesla.rgf.bg.ac.rs/"
+JERTEH_URL = "https://jerteh.rs/"
 
 
 class NERDemoGUI:
@@ -78,13 +80,45 @@ class NERDemoGUI:
         title_label.pack()
         
         # Attribution
-        attribution_label = tk.Label(
-            self.root,
-            text=ATTRIBUTION_TEXT,
+        attribution_frame = tk.Frame(self.root)
+        attribution_frame.pack()
+        
+        made_by_label = tk.Label(
+            attribution_frame,
+            text="Made by ",
             font=("Arial", 9),
             fg="#808080"
         )
-        attribution_label.pack()
+        made_by_label.pack(side=tk.LEFT)
+        
+        tesla_link = tk.Label(
+            attribution_frame,
+            text="TESLA",
+            font=("Arial", 9, "underline"),
+            fg="#0066CC",
+            cursor="hand2"
+        )
+        tesla_link.pack(side=tk.LEFT)
+        tesla_link.bind("<Button-1>", lambda e: webbrowser.open(TESLA_URL))
+        
+        and_label = tk.Label(
+            attribution_frame,
+            text=" and ",
+            font=("Arial", 9),
+            fg="#808080"
+        )
+        and_label.pack(side=tk.LEFT)
+        
+        jerteh_link = tk.Label(
+            attribution_frame,
+            text="Jerteh",
+            font=("Arial", 9, "underline"),
+            fg="#0066CC",
+            cursor="hand2"
+        )
+        jerteh_link.pack(side=tk.LEFT)
+        jerteh_link.bind("<Button-1>", lambda e: webbrowser.open(JERTEH_URL))
+
         
         # Model selection frame
         model_frame = ttk.LabelFrame(self.root, text="Model Selection", padding=10)

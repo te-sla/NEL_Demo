@@ -311,8 +311,8 @@ For issues or questions:
 - GUI built with Python's tkinter
 
 Made by:
-- **TESLA** - Text Embeddings - Serbian Language Applications
-- **Language Resources and Technologies Society - Jerteh**
+- [**TESLA** - Text Embeddings - Serbian Language Applications](https://tesla.rgf.bg.ac.rs/)
+- [**Language Resources and Technologies Society - Jerteh**](https://jerteh.rs/)
 
 ---
 
