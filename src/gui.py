@@ -33,7 +33,8 @@ try:
 except ImportError:
     print("Warning: text_chunker module not found. Large text processing may fail.")
     process_text_in_chunks = None
-    DEFAULT_MAX_CHUNK_SIZE = 100000
+    # Fallback value matches the default in text_chunker.py
+    DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
 
 
 class NERDemoGUI:
