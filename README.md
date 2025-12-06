@@ -81,36 +81,11 @@ The installer will:
 
 ## Setting Up a Model
 
-### Option 1: Download a Pre-trained Model
+### Pre-installed Model
 
-After installation, activate your virtual environment and download a spaCy model:
+A Serbian NER+NEL model (`trsic4-CNN-ner-nel`) is already installed in the `models/` directory and ready to use. No additional setup is required!
 
-**Windows:**
-```powershell
-.\venv\Scripts\Activate.ps1
-python -m spacy download en_core_web_sm
-```
-
-**Linux/Mac:**
-```bash
-source venv/bin/activate
-python -m spacy download en_core_web_sm
-```
-
-Then create the directory structure and copy the model:
-```bash
-# Create the directory structure
-mkdir -p models/en_core_web_sm/model-best
-
-# Find and copy the model (the actual model is in a versioned subdirectory)
-# Linux/Mac:
-python -c "import en_core_web_sm, shutil, pathlib; src = pathlib.Path(en_core_web_sm.__file__).parent / list(pathlib.Path(en_core_web_sm.__file__).parent.glob('en_core_web_sm-*'))[0].name; shutil.copytree(src, 'models/en_core_web_sm/model-best', dirs_exist_ok=True)"
-
-# Windows PowerShell:
-# python -c "import en_core_web_sm, shutil, pathlib; src = pathlib.Path(en_core_web_sm.__file__).parent / list(pathlib.Path(en_core_web_sm.__file__).parent.glob('en_core_web_sm-*'))[0].name; shutil.copytree(src, 'models/en_core_web_sm/model-best', dirs_exist_ok=True)"
-```
-
-### Option 2: Use Your Own Trained Model
+### Using Your Own Trained Model
 
 If you have a trained spaCy model:
 
