@@ -13,6 +13,7 @@ A simple demonstration application for Named Entity Recognition (NER) and Named 
 - ✅ **Simple GUI**: User-friendly interface built with tkinter
 - ✅ **Model Management**: Load custom trained models from the `models/` directory
 - ✅ **Text Processing**: Process any text and extract named entities
+- ✅ **Cyrillic Transliteration**: Automatic transliteration from Cyrillic to Latin script for better NER accuracy
 - ✅ **Smart Text Chunking**: Automatically handles large texts by chunking on paragraph boundaries
 - ✅ **Visual Output**: Generate beautiful HTML visualizations using displaCy
 - ✅ **Output Management**: Save all outputs to `data/outputs/` with timestamps
@@ -152,18 +153,36 @@ python src/gui.py
    - Click "Load Model" to load it
    - Wait for the confirmation message
 
-2. **Enter Text**:
+2. **Configure Processing Options**:
+   - **Transliterate Cyrillic to Latin**: Enabled by default when the model is trained on Latin script
+   - This option automatically converts Cyrillic text to Latin before processing for better entity recognition
+
+3. **Enter Text**:
    - Type or paste text into the input area
    - Or click "Load Sample Text" for a demo
 
-3. **Process Text**:
+4. **Process Text**:
    - Click "Process Text (NER)" to analyze the text
    - View entities in the results section
    - HTML visualization is automatically saved
 
-4. **View Results**:
+5. **View Results**:
    - Click "View Last Output" to open the HTML in your browser
    - Click "Open Output Folder" to see all saved outputs
+
+### Cyrillic Transliteration Feature
+
+The application includes automatic Cyrillic-to-Latin transliteration to improve NER accuracy when using models trained primarily on Latin script:
+
+- **Automatic Conversion**: Converts Serbian Cyrillic text to Latin script before processing
+- **Enabled by Default**: The transliteration option is checked by default (if `cyrtranslit` is installed)
+- **Toggleable**: Can be disabled via the checkbox if you prefer to process Cyrillic text directly
+- **Preserves Entities**: Latin text remains unchanged; only Cyrillic characters are transliterated
+- **Better Accuracy**: Models trained on Latin script typically perform better with transliterated text
+
+**Example**: The Cyrillic text "Новак Ђоковић рођен у Београду" is automatically transliterated to "Novak Đoković rođen u Beogradu" before being sent to the NER pipeline.
+
+**Note**: If you have a model specifically trained on Cyrillic text, you can disable this option by unchecking the "Transliterate Cyrillic to Latin before processing" checkbox.
 
 ### Example
 
@@ -252,6 +271,7 @@ Note: Transformer models are larger and slower but more accurate.
 
 Core dependencies (installed automatically):
 - `spacy>=3.7.0` - Core NLP library
+- `cyrtranslit>=1.0.0` - Cyrillic-to-Latin transliteration
 - `tkinter-tooltip>=2.0.0` - GUI tooltips (optional)
 
 Optional:
