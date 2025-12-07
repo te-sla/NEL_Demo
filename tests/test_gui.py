@@ -29,7 +29,8 @@ class TestNERDemoGUIInitialization(unittest.TestCase):
         """Clean up after tests."""
         try:
             self.root.destroy()
-        except:
+        except tk.TclError:
+            # Ignore errors if the window is already destroyed or not initialized
             pass
     
     @patch.object(NERDemoGUI, 'create_widgets')
@@ -111,7 +112,8 @@ class TestToolTip(unittest.TestCase):
         """Clean up after tests."""
         try:
             self.root.destroy()
-        except:
+        except tk.TclError:
+            # Ignore errors if root window is already destroyed
             pass
     
     def test_tooltip_with_real_widget(self):
@@ -200,7 +202,8 @@ class TestNERDemoGUICheckModels(unittest.TestCase):
         """Clean up after tests."""
         try:
             self.root.destroy()
-        except:
+        except tk.TclError:
+            # Ignore errors if the root window is already destroyed
             pass
     
     @patch.object(NERDemoGUI, 'create_widgets')

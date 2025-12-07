@@ -58,9 +58,9 @@ class ToolTip:
         try:
             x = self.widget.winfo_rootx() + 25
             y = self.widget.winfo_rooty() + self.widget.winfo_height() + 5
-        except Exception:
+        except (TypeError, tk.TclError, AttributeError, RuntimeError):
             # In headless/test environments widget methods may be mocked or unavailable.
-            # Broad catch is intentional: could be TypeError (Mock+int), TclError (no display),
+            # Could be TypeError (Mock+int), TclError (no display),
             # AttributeError (incomplete mock), etc. Fail gracefully in all cases.
             return
         
@@ -114,7 +114,7 @@ class NERDemoGUI:
         self.create_widgets()
         
         # Only run check_models automatically if create_widgets actually created the widgets.
-        if getattr(self, 'model_combo', None) is not None and getattr(self, 'status_var', None) is not None:
+        if self.model_combo is not None and self.status_var is not None:
             self.check_models()
         
     def create_widgets(self):
