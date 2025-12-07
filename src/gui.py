@@ -60,7 +60,8 @@ class ToolTip:
             y = self.widget.winfo_rooty() + self.widget.winfo_height() + 5
         except Exception:
             # In headless/test environments widget methods may be mocked or unavailable.
-            # Fail gracefully and do not attempt to show a tooltip.
+            # Broad catch is intentional: could be TypeError (Mock+int), TclError (no display),
+            # AttributeError (incomplete mock), etc. Fail gracefully in all cases.
             return
         
         self.tooltip_window = tw = tk.Toplevel(self.widget)
