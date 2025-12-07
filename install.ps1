@@ -11,11 +11,14 @@ try {
     Write-Host "Found: $pythonVersion" -ForegroundColor Cyan
 } catch {
     Write-Host "Error: Python is not installed or not in PATH" -ForegroundColor Red
-    Write-Host "Please install Python 3.10 or higher from https://www.python.org/downloads/" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Please install Python 3.10 or 3.11 from https://www.python.org/downloads/" -ForegroundColor Yellow
+    Write-Host "Note: Python 3.10 or 3.11 is recommended for best compatibility with spaCy." -ForegroundColor Yellow
+    Write-Host "Python 3.12+ may have compatibility issues with spacy-transformers." -ForegroundColor Yellow
     exit 1
 }
 
-# Check Python version (must be >= 3.10)
+# Check Python version (must be >= 3.10, recommend <= 3.11)
 $versionOutput = python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"
 $versionParts = $versionOutput.Split('.')
 $major = [int]$versionParts[0]
@@ -23,7 +26,19 @@ $minor = [int]$versionParts[1]
 
 if ($major -lt 3 -or ($major -eq 3 -and $minor -lt 10)) {
     Write-Host "Error: Python 3.10 or higher is required. Found Python $versionOutput" -ForegroundColor Red
+    Write-Host "Please install Python 3.10 or 3.11 from https://www.python.org/downloads/" -ForegroundColor Yellow
     exit 1
+}
+
+if ($major -eq 3 -and $minor -gt 11) {
+    Write-Host "Warning: Python $versionOutput detected. Python 3.12+ may have compatibility issues with spacy-transformers." -ForegroundColor Yellow
+    Write-Host "Python 3.10 or 3.11 is recommended for best compatibility." -ForegroundColor Yellow
+    Write-Host ""
+    $continue = Read-Host "Do you want to continue anyway? (y/N)"
+    if ($continue -ne "y" -and $continue -ne "Y") {
+        Write-Host "Installation cancelled. Please install Python 3.10 or 3.11." -ForegroundColor Yellow
+        exit 1
+    }
 }
 
 Write-Host "Python version check passed: $versionOutput" -ForegroundColor Green

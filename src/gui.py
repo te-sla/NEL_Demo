@@ -43,7 +43,7 @@ except ImportError:
             CYRTRANSLIT_AVAILABLE
         )
     except ImportError:
-        # Fallback for when running as a script
+        # Final fallback if both relative and absolute imports fail
         import warnings
         warnings.warn("text_chunker module not found. Large text processing may fail.", ImportWarning)
         process_text_in_chunks = None
@@ -706,6 +706,18 @@ class NERDemoGUI:
                 self.root.update()
                 
                 html = displacy.render(doc, style="ent", page=True)
+                
+                # Add Wikidata links for entities with Q-IDs
+                try:
+                    from .text_chunker import add_wikidata_links
+                    html = add_wikidata_links(html, doc)
+                except (ImportError, AttributeError):
+                    # Fallback if function not available
+                    try:
+                        from text_chunker import add_wikidata_links
+                        html = add_wikidata_links(html, doc)
+                    except (ImportError, AttributeError):
+                        pass  # Continue without Wikidata links
                 
                 # Save HTML to output directory
                 self.progress_var.set(95)

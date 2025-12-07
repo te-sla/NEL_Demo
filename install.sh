@@ -9,11 +9,14 @@ echo "=========================================="
 # Check if Python is installed
 if ! command -v python3 &> /dev/null; then
     echo "Error: Python 3 is not installed"
-    echo "Please install Python 3.10 or higher"
+    echo ""
+    echo "Please install Python 3.10 or 3.11 from https://www.python.org/downloads/"
+    echo "Note: Python 3.10 or 3.11 is recommended for best compatibility with spaCy."
+    echo "Python 3.12+ may have compatibility issues with spacy-transformers."
     exit 1
 fi
 
-# Check Python version (must be >= 3.10)
+# Check Python version (must be >= 3.10, recommend <= 3.11)
 PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
 echo "Found: Python $PYTHON_VERSION"
 
@@ -22,7 +25,20 @@ MINOR=$(echo $PYTHON_VERSION | cut -d. -f2)
 
 if [ "$MAJOR" -lt 3 ] || [ "$MAJOR" -eq 3 -a "$MINOR" -lt 10 ]; then
     echo "Error: Python 3.10 or higher is required. Found Python $PYTHON_VERSION"
+    echo "Please install Python 3.10 or 3.11 from https://www.python.org/downloads/"
     exit 1
+fi
+
+if [ "$MAJOR" -eq 3 -a "$MINOR" -gt 11 ]; then
+    echo "Warning: Python $PYTHON_VERSION detected. Python 3.12+ may have compatibility issues with spacy-transformers."
+    echo "Python 3.10 or 3.11 is recommended for best compatibility."
+    echo ""
+    read -p "Do you want to continue anyway? (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Installation cancelled. Please install Python 3.10 or 3.11."
+        exit 1
+    fi
 fi
 
 echo "Python version check passed: $PYTHON_VERSION"

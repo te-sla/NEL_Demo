@@ -7,7 +7,7 @@ name = "nel-demo"
 version = "1.0.0"
 description = "A simple demonstration application for Named Entity Recognition (NER) and Named Entity Linking (NEL) using spaCy models"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.12"
 license = {text = "CC0-1.0"}
 authors = [
     {name = "TESLA - Text Embeddings - Serbian Language Applications"},
@@ -22,7 +22,6 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Text Processing :: Linguistic",
 ]

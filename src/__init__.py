@@ -17,6 +17,7 @@ from .text_chunker import (
     process_text_in_chunks,
     split_into_paragraphs,
     transliterate_to_latin,
+    add_wikidata_links,
     CYRTRANSLIT_AVAILABLE,
     DEFAULT_MAX_CHUNK_SIZE,
 )
@@ -25,6 +26,7 @@ __all__ = [
     "process_text_in_chunks",
     "split_into_paragraphs",
     "transliterate_to_latin",
+    "add_wikidata_links",
     "CYRTRANSLIT_AVAILABLE",
     "DEFAULT_MAX_CHUNK_SIZE",
     "VERSION",
