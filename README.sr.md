@@ -168,12 +168,12 @@ Aplikacija uključuje automatsku transliteraciju ćirilice u latinicu za pobolj�
 Probajte ovaj primer teksta:
 ```
 Народна банка Србије је централна банка Републике Србије са седиштем у Београду. 
-Гувернер Народне банке Србије је Jorgovanka Tabaković која се налази на тој позицији од 2012. године. 
+Гувернер Народне банке Србије је Јоргованка Табаковић која се налази на тој позицији од 2012. године. 
 Новак Ђоковић је српски тенисер рођен у Београду 1987. године.
 ```
 
 Aplikacija će:
-- Ekstraktovati entitete kao što su "Народна банка Србије" (ORG), "Jorgovanka Tabaković" (PERSON), "Београд" (GPE)
+- Ekstraktovati entitete kao što su "Народна банка Србије" (ORG), "Јоргованка Табаковић" (PERSON), "Београд" (GPE)
 - Prikazati oznake entiteta i pozicije
 - Generisati HTML vizuelizaciju sa istaknutim entitetima
 - Sačuvati izlaz u `data/outputs/ner_output_YYYYMMDD_HHMMSS.html`

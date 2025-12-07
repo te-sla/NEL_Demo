@@ -10,6 +10,9 @@ from .config import APP_NAME, TESLA_URL, JERTEH_URL
 
 __author__ = "TESLA & Jerteh"
 
+# Re-export VERSION for backward compatibility
+VERSION = __version__
+
 from .text_chunker import (
     process_text_in_chunks,
     split_into_paragraphs,

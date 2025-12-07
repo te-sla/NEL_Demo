@@ -43,7 +43,9 @@ except ImportError:
             CYRTRANSLIT_AVAILABLE
         )
     except ImportError:
-        print("Warning: text_chunker module not found. Large text processing may fail.")
+        # Fallback for when running as a script
+        import warnings
+        warnings.warn("text_chunker module not found. Large text processing may fail.", ImportWarning)
         process_text_in_chunks = None
         split_into_paragraphs = None
         transliterate_to_latin = None
@@ -60,7 +62,6 @@ except ImportError:
         from config import TESLA_URL, JERTEH_URL, MAX_FILE_SIZE, PROJECT_ROOT
     except ImportError:
         # Fallback defaults
-        from pathlib import Path
         PROJECT_ROOT = Path(__file__).parent.parent
         TESLA_URL = "https://tesla.rgf.bg.ac.rs/"
         JERTEH_URL = "https://jerteh.rs/"

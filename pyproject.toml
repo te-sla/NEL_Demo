@@ -48,11 +48,7 @@ Documentation = "https://github.com/te-sla/NEL_Demo/blob/main/README.md"
 nel-demo = "src.gui:main"
 
 [tool.setuptools]
-packages = ["src", "tests"]
-
-[tool.setuptools.package-data]
-src = ["*.py"]
-tests = ["*.py"]
+packages = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
