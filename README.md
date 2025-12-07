@@ -131,7 +131,7 @@ python src/gui.py
    - Wait for the confirmation message
 
 2. **Configure Processing Options**:
-   - **Transliterate Cyrillic to Latin**: Enabled by default when the model is trained on Latin script
+   - **Transliterate Cyrillic to Latin**: Enabled by default (if `cyrtranslit` is installed)
    - This option automatically converts Cyrillic text to Latin before processing for better entity recognition
 
 3. **Enter Text**:
@@ -152,7 +152,7 @@ python src/gui.py
 
 The application includes automatic Cyrillic-to-Latin transliteration to improve NER accuracy when using models trained primarily on Latin script:
 
-- **Automatic Conversion**: Converts Serbian Cyrillic text to Latin script before processing
+- **Automatic Conversion**: Converts Cyrillic text to Latin script (supports Serbian, Montenegrin, Macedonian, Russian, Ukrainian, Kazakh, and Bulgarian) before processing
 - **Enabled by Default**: The transliteration option is checked by default (if `cyrtranslit` is installed)
 - **Toggleable**: Can be disabled via the checkbox if you prefer to process Cyrillic text directly
 - **Preserves Entities**: Latin text remains unchanged; only Cyrillic characters are transliterated

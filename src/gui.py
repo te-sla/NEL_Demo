@@ -515,15 +515,32 @@ class NERDemoGUI:
                 # Get transliteration setting
                 use_transliteration = self.transliterate_var.get()
                 
-                # Process text in chunks
-                all_entities, html, num_chunks = process_text_in_chunks(
-                    self.nlp, 
-                    text, 
-                    max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
-                    output_path=output_file,
-                    transliterate=use_transliteration,
-                    transliterate_lang=self.DEFAULT_TRANSLITERATION_LANG
-                )
+                # Process text in chunks with error handling for transliteration
+                try:
+                    all_entities, html, num_chunks = process_text_in_chunks(
+                        self.nlp, 
+                        text, 
+                        max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
+                        output_path=output_file,
+                        transliterate=use_transliteration,
+                        transliterate_lang=self.DEFAULT_TRANSLITERATION_LANG
+                    )
+                except ImportError:
+                    # If transliteration fails, process without it
+                    messagebox.showwarning(
+                        "Transliteration Unavailable",
+                        "The transliteration feature is not available.\n\n"
+                        "To enable this feature, install the required package:\n"
+                        "pip install cyrtranslit\n\n"
+                        "Processing will continue with the original text."
+                    )
+                    all_entities, html, num_chunks = process_text_in_chunks(
+                        self.nlp, 
+                        text, 
+                        max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
+                        output_path=output_file,
+                        transliterate=False
+                    )
                 
                 # Display entities in results
                 self.results_text.delete(1.0, tk.END)

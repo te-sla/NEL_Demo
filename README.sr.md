@@ -130,7 +130,7 @@ python src/gui.py
    - Sačekajte poruku potvrde
 
 2. **Konfigurišite opcije obrade**:
-   - **Transliteracija ćirilice u latinicu**: Podrazumevano uključeno kada je model treniran na latiničnom pismu
+   - **Transliteracija ćirilice u latinicu**: Podrazumevano uključeno (ako je instaliran paket `cyrtranslit`)
    - Ova opcija automatski konvertuje ćirilični tekst u latinicu pre obrade za bolje prepoznavanje entiteta
 
 3. **Unesite tekst**:
@@ -151,8 +151,8 @@ python src/gui.py
 
 Aplikacija uključuje automatsku transliteraciju ćirilice u latinicu za poboljšanje tačnosti NER-a kada koristite modele trenirane prvenstveno na latiničnom pismu:
 
-- **Automatska konverzija**: Konvertuje srpski ćirilični tekst u latinično pismo pre obrade
-- **Podrazumevano uključeno**: Opcija transliteracije je označena po defaultu (ako je `cyrtranslit` instaliran)
+- **Automatska konverzija**: Konvertuje ćirilični tekst sa sedam jezika (srpski, crnogorski, makedonski, ruski, ukrajinski, kazahstanski, bugarski) u latinično pismo pre obrade
+- **Podrazumevano uključeno**: Opcija transliteracije je podrazumevano označena (ako je `cyrtranslit` instaliran)
 - **Može se isključiti**: Može se onemogućiti preko checkbox-a ako preferirate direktnu obradu ćiriličnog teksta
 - **Čuva entitete**: Latinični tekst ostaje nepromenjen; samo se ćirilični karakteri transliterišu
 - **Bolja tačnost**: Modeli trenirani na latiničnom pismu tipično imaju bolje performanse sa transliterovanim tekstom

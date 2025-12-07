@@ -237,6 +237,46 @@ class TestProcessTextInChunks:
         # This test requires an actual spaCy model to work with displaCy
         # It's better tested with integration tests that use real models
         pass
+    
+    @pytest.mark.skipif(not CYRTRANSLIT_AVAILABLE, reason="cyrtranslit not installed")
+    def test_transliteration_integration(self):
+        """Test that transliterate parameter works in process_text_in_chunks."""
+        # This test verifies the integration of transliteration in the chunking workflow
+        try:
+            import spacy
+        except ImportError:
+            pytest.skip("spaCy not installed")
+        
+        # Create a blank Serbian model
+        nlp = spacy.blank("sr")
+        
+        # Cyrillic text
+        cyrillic_text = "Београд је главни град Србије."
+        
+        # Process WITH transliteration
+        entities_with, html_with, chunks_with = process_text_in_chunks(
+            nlp, 
+            cyrillic_text,
+            transliterate=True,
+            transliterate_lang='sr'
+        )
+        
+        # Process WITHOUT transliteration
+        entities_without, html_without, chunks_without = process_text_in_chunks(
+            nlp, 
+            cyrillic_text,
+            transliterate=False
+        )
+        
+        # Both should succeed (blank model won't find entities, but processing should work)
+        assert chunks_with == 1
+        assert chunks_without == 1
+        assert html_with is not None
+        assert html_without is not None
+        
+        # The HTML outputs should be different due to transliteration
+        # (one contains Cyrillic, one contains Latin)
+        assert html_with != html_without
 
 
 class TestEdgeCases:
@@ -315,6 +355,24 @@ class TestTransliteration:
         result = transliterate_to_latin(cyrillic_text, 'sr')
         expected = "Narodna banka Srbije je centralna banka."
         assert result == expected
+    
+    @pytest.mark.skipif(not CYRTRANSLIT_AVAILABLE, reason="cyrtranslit not installed")
+    def test_other_language_codes(self):
+        """Test transliteration with other supported language codes."""
+        # Test Russian
+        russian_text = "Москва"
+        russian_result = transliterate_to_latin(russian_text, 'ru')
+        assert russian_result  # Should not raise an error
+        
+        # Test Macedonian
+        macedonian_text = "Скопје"
+        macedonian_result = transliterate_to_latin(macedonian_text, 'mk')
+        assert macedonian_result  # Should not raise an error
+        
+        # Test Bulgarian
+        bulgarian_text = "София"
+        bulgarian_result = transliterate_to_latin(bulgarian_text, 'bg')
+        assert bulgarian_result  # Should not raise an error
     
     @pytest.mark.skipif(not CYRTRANSLIT_AVAILABLE, reason="cyrtranslit not installed")
     def test_special_serbian_characters(self):
