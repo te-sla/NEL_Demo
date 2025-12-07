@@ -11,6 +11,7 @@ Jednostavna demonstraciona aplikacija za Prepoznavanje Imenovanih Entiteta (NER)
 - ✅ **Jednostavan GUI**: Korisnički interfejs napravljen sa tkinter-om
 - ✅ **Upravljanje modelima**: Učitavanje custom treniranih modela iz `models/` direktorijuma
 - ✅ **Obrada teksta**: Obrada bilo kog teksta i ekstrakcija imenovanih entiteta
+- ✅ **Transliteracija ćirilice**: Automatska transliteracija sa ćiriličnog na latinično pismo za bolju NER tačnost
 - ✅ **Pametno deljenje teksta**: Automatski deli velike tekstove po granicama paragrafa
 - ✅ **Vizuelni izlaz**: Generisanje lepih HTML vizuelizacija koristeći displaCy
 - ✅ **Upravljanje izlazom**: Čuvanje svih izlaza u `data/outputs/` sa vremenskim oznakama
@@ -128,19 +129,37 @@ python src/gui.py
    - Kliknite "Load Model" da ga učitate
    - Sačekajte poruku potvrde
 
-2. **Unesite tekst**:
+2. **Konfigurišite opcije obrade**:
+   - **Transliteracija ćirilice u latinicu**: Podrazumevano uključeno (ako je instaliran paket `cyrtranslit`)
+   - Ova opcija automatski konvertuje ćirilični tekst u latinicu pre obrade za bolje prepoznavanje entiteta
+
+3. **Unesite tekst**:
    - Ukucajte ili nalepite tekst u polje za unos
    - Ili kliknite "Load Sample Text" za demo
    - Ili kliknite "Load from File" da učitate tekstualni fajl iz `inputs/` fascikle
 
-3. **Obradite tekst**:
+4. **Obradite tekst**:
    - Kliknite "Process Text (NER)" da analizirate tekst
    - Pogledajte entitete u sekciji rezultata
    - HTML vizuelizacija se automatski čuva
 
-4. **Pogledajte rezultate**:
+5. **Pogledajte rezultate**:
    - Kliknite "View Last Output" da otvorite HTML u vašem pretraživaču
    - Kliknite "Open Output Folder" da vidite sve sačuvane izlaze
+
+### Funkcija transliteracije ćirilice
+
+Aplikacija uključuje automatsku transliteraciju ćirilice u latinicu za poboljšanje tačnosti NER-a kada koristite modele trenirane prvenstveno na latiničnom pismu:
+
+- **Automatska konverzija**: Konvertuje ćirilični tekst sa sedam jezika (srpski, crnogorski, makedonski, ruski, ukrajinski, kazahstanski, bugarski) u latinično pismo pre obrade
+- **Podrazumevano uključeno**: Opcija transliteracije je podrazumevano označena (ako je `cyrtranslit` instaliran)
+- **Može se isključiti**: Može se onemogućiti preko checkbox-a ako preferirate direktnu obradu ćiriličnog teksta
+- **Čuva entitete**: Latinični tekst ostaje nepromenjen; samo se ćirilični karakteri transliterišu
+- **Bolja tačnost**: Modeli trenirani na latiničnom pismu tipično imaju bolje performanse sa transliterovanim tekstom
+
+**Primer**: Ćirilični tekst "Новак Ђоковић рођен у Београду" se automatski transliteriše u "Novak Đoković rođen u Beogradu" pre slanja u NER pipeline.
+
+**Napomena**: Ako imate model specifično treniran na ćiriličnom tekstu, možete onemogućiti ovu opciju tako što ćete odznačiti opciju "Transliterate Cyrillic to Latin before processing".
 
 ### Primer
 
@@ -229,6 +248,7 @@ Napomena: Transformer modeli su veći i sporiji, ali precizniji.
 
 Osnovne zavisnosti (instaliraju se automatski):
 - `spacy>=3.7.0` - Osnovna NLP biblioteka
+- `cyrtranslit>=1.0.0` - Transliteracija ćirilice u latinicu
 - `tkinter-tooltip>=2.0.0` - GUI tooltips (opciono)
 
 Opciono:

@@ -29,11 +29,19 @@ except ImportError:
 
 # Import text chunker module
 try:
-    from text_chunker import process_text_in_chunks, split_into_paragraphs, DEFAULT_MAX_CHUNK_SIZE
+    from text_chunker import (
+        process_text_in_chunks, 
+        split_into_paragraphs, 
+        transliterate_to_latin,
+        DEFAULT_MAX_CHUNK_SIZE,
+        CYRTRANSLIT_AVAILABLE
+    )
 except ImportError:
     print("Warning: text_chunker module not found. Large text processing may fail.")
     process_text_in_chunks = None
     split_into_paragraphs = None
+    transliterate_to_latin = None
+    CYRTRANSLIT_AVAILABLE = False
     # Fallback value matches the default in text_chunker.py
     DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
 
@@ -85,6 +93,9 @@ class ToolTip:
 class NERDemoGUI:
     """Main GUI application for NER+NEL demonstration."""
     
+    # Default language code for transliteration
+    DEFAULT_TRANSLITERATION_LANG = 'sr'
+    
     def __init__(self, root):
         """Initialize the GUI application.
         
@@ -101,7 +112,11 @@ class NERDemoGUI:
         self.models_dir = PROJECT_ROOT / "models"
         self.inputs_dir = PROJECT_ROOT / "inputs"
         
+        # Transliteration setting (enabled by default if cyrtranslit is available)
+        self.transliterate_enabled = CYRTRANSLIT_AVAILABLE
+        
         # Ensure output and inputs directories exist
+        
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.inputs_dir.mkdir(parents=True, exist_ok=True)
         
@@ -190,6 +205,40 @@ class NERDemoGUI:
         
         self.model_status_label = ttk.Label(model_frame, text="No model loaded", foreground="red")
         self.model_status_label.grid(row=1, column=0, columnspan=4, sticky=tk.W, padx=5, pady=5)
+        
+        # Transliteration options frame
+        transliterate_frame = ttk.LabelFrame(self.root, text="Text Processing Options", padding=10)
+        transliterate_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        self.transliterate_var = tk.BooleanVar(value=self.transliterate_enabled)
+        transliterate_checkbox = ttk.Checkbutton(
+            transliterate_frame,
+            text="Transliterate Cyrillic to Latin before processing",
+            variable=self.transliterate_var,
+            state="normal" if CYRTRANSLIT_AVAILABLE else "disabled"
+        )
+        transliterate_checkbox.grid(row=0, column=0, sticky=tk.W, padx=5)
+        
+        if CYRTRANSLIT_AVAILABLE:
+            transliterate_help = ttk.Label(
+                transliterate_frame,
+                text="ℹ️ Recommended for models trained on Latin script",
+                foreground="gray",
+                font=("Arial", 8)
+            )
+            transliterate_help.grid(row=1, column=0, sticky=tk.W, padx=25, pady=(0, 5))
+            ToolTip(transliterate_help, 
+                   "The NER model may have been trained primarily on Latin script.\n"
+                   "Transliterating Cyrillic text to Latin can improve entity recognition.\n"
+                   "This option is enabled by default.")
+        else:
+            transliterate_warning = ttk.Label(
+                transliterate_frame,
+                text="⚠️ Install 'cyrtranslit' package to enable transliteration",
+                foreground="orange",
+                font=("Arial", 8)
+            )
+            transliterate_warning.grid(row=1, column=0, sticky=tk.W, padx=25, pady=(0, 5))
         
         # Input frame
         input_frame = ttk.LabelFrame(self.root, text="Input Text", padding=10)
@@ -463,13 +512,35 @@ class NERDemoGUI:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 output_file = self.output_dir / f"ner_output_{timestamp}.html"
                 
-                # Process text in chunks
-                all_entities, html, num_chunks = process_text_in_chunks(
-                    self.nlp, 
-                    text, 
-                    max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
-                    output_path=output_file
-                )
+                # Get transliteration setting
+                use_transliteration = self.transliterate_var.get()
+                
+                # Process text in chunks with error handling for transliteration
+                try:
+                    all_entities, html, num_chunks = process_text_in_chunks(
+                        self.nlp, 
+                        text, 
+                        max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
+                        output_path=output_file,
+                        transliterate=use_transliteration,
+                        transliterate_lang=self.DEFAULT_TRANSLITERATION_LANG
+                    )
+                except ImportError:
+                    # If transliteration fails, process without it
+                    messagebox.showwarning(
+                        "Transliteration Unavailable",
+                        "The transliteration feature is not available.\n\n"
+                        "To enable this feature, install the required package:\n"
+                        "pip install cyrtranslit\n\n"
+                        "Processing will continue with the original text."
+                    )
+                    all_entities, html, num_chunks = process_text_in_chunks(
+                        self.nlp, 
+                        text, 
+                        max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
+                        output_path=output_file,
+                        transliterate=False
+                    )
                 
                 # Display entities in results
                 self.results_text.delete(1.0, tk.END)
@@ -512,7 +583,24 @@ class NERDemoGUI:
                 )
             else:
                 # Process text normally (single paragraph or no chunking available)
-                doc = self.nlp(text)
+                # Get transliteration setting and apply if enabled
+                use_transliteration = self.transliterate_var.get()
+                text_to_process = text
+                
+                if use_transliteration and transliterate_to_latin is not None:
+                    try:
+                        text_to_process = transliterate_to_latin(text, self.DEFAULT_TRANSLITERATION_LANG)
+                    except ImportError:
+                        messagebox.showwarning(
+                            "Transliteration Unavailable",
+                            "The transliteration feature is not available.\n\n"
+                            "To enable this feature, install the required package:\n"
+                            "pip install cyrtranslit\n\n"
+                            "Processing will continue with the original text."
+                        )
+                        text_to_process = text
+                
+                doc = self.nlp(text_to_process)
                 
                 # Display entities in results
                 self.results_text.delete(1.0, tk.END)
