@@ -15,10 +15,6 @@ from pathlib import Path
 from datetime import datetime
 import webbrowser
 
-# Add the project root to the path
-PROJECT_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
-
 try:
     import spacy
     from spacy import displacy
@@ -55,12 +51,20 @@ except ImportError:
         # Fallback value matches the default in text_chunker.py
         DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
 
-# Attribution URLs
-TESLA_URL = "https://tesla.rgf.bg.ac.rs/"
-JERTEH_URL = "https://jerteh.rs/"
-
-# File loading constants
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB limit for file loading
+# Import configuration constants
+try:
+    from .config import TESLA_URL, JERTEH_URL, MAX_FILE_SIZE, PROJECT_ROOT
+except ImportError:
+    # Fallback for when running as a script
+    try:
+        from config import TESLA_URL, JERTEH_URL, MAX_FILE_SIZE, PROJECT_ROOT
+    except ImportError:
+        # Fallback defaults
+        from pathlib import Path
+        PROJECT_ROOT = Path(__file__).parent.parent
+        TESLA_URL = "https://tesla.rgf.bg.ac.rs/"
+        JERTEH_URL = "https://jerteh.rs/"
+        MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB limit for file loading
 
 
 class ToolTip:
