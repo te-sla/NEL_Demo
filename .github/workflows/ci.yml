@@ -26,6 +26,14 @@ jobs:
         python -m pip install -r requirements.txt
         if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
     
+    - name: Install and start Xvfb
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb
+        Xvfb :99 -screen 0 1024x768x24 > /tmp/xvfb.log 2>&1 &
+        sleep 2
+        echo "DISPLAY=:99" >> $GITHUB_ENV
+    
     - name: Run tests
       run: |
         python -m pytest -q
