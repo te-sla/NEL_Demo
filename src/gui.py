@@ -32,8 +32,6 @@ try:
     from text_chunker import (
         process_text_in_chunks, 
         split_into_paragraphs, 
-        chunk_text,
-        merge_html_outputs,
         DEFAULT_MAX_CHUNK_SIZE
     )
 except ImportError:
