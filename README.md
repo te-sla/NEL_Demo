@@ -13,6 +13,7 @@ A simple demonstration application for Named Entity Recognition (NER) and Named 
 - ✅ **Simple GUI**: User-friendly interface built with tkinter
 - ✅ **Model Management**: Load custom trained models from the `models/` directory
 - ✅ **Text Processing**: Process any text and extract named entities
+- ✅ **Cyrillic Transliteration**: Automatic transliteration from Cyrillic to Latin script for better NER accuracy
 - ✅ **Smart Text Chunking**: Automatically handles large texts by chunking on paragraph boundaries
 - ✅ **Visual Output**: Generate beautiful HTML visualizations using displaCy
 - ✅ **Output Management**: Save all outputs to `data/outputs/` with timestamps
@@ -34,6 +35,8 @@ NEL_Demo/
 ├── models/                 # Place your trained models here
 │   └── {model_name}/
 │       └── model-best/     # Your trained spaCy model
+├── inputs/                 # Input text files
+│   └── sample_text.txt     # Sample text file
 ├── data/
 │   └── outputs/            # HTML visualization outputs
 └── venv/                   # Virtual environment (created by installer)
@@ -81,36 +84,11 @@ The installer will:
 
 ## Setting Up a Model
 
-### Option 1: Download a Pre-trained Model
+### Pre-installed Model
 
-After installation, activate your virtual environment and download a spaCy model:
+A Serbian NER+NEL model (`trsic4-CNN-ner-nel`) is already installed in the `models/` directory and ready to use. No additional setup is required!
 
-**Windows:**
-```powershell
-.\venv\Scripts\Activate.ps1
-python -m spacy download en_core_web_sm
-```
-
-**Linux/Mac:**
-```bash
-source venv/bin/activate
-python -m spacy download en_core_web_sm
-```
-
-Then create the directory structure and copy the model:
-```bash
-# Create the directory structure
-mkdir -p models/en_core_web_sm/model-best
-
-# Find and copy the model (the actual model is in a versioned subdirectory)
-# Linux/Mac:
-python -c "import en_core_web_sm, shutil, pathlib; src = pathlib.Path(en_core_web_sm.__file__).parent / list(pathlib.Path(en_core_web_sm.__file__).parent.glob('en_core_web_sm-*'))[0].name; shutil.copytree(src, 'models/en_core_web_sm/model-best', dirs_exist_ok=True)"
-
-# Windows PowerShell:
-# python -c "import en_core_web_sm, shutil, pathlib; src = pathlib.Path(en_core_web_sm.__file__).parent / list(pathlib.Path(en_core_web_sm.__file__).parent.glob('en_core_web_sm-*'))[0].name; shutil.copytree(src, 'models/en_core_web_sm/model-best', dirs_exist_ok=True)"
-```
-
-### Option 2: Use Your Own Trained Model
+### Using Your Own Trained Model
 
 If you have a trained spaCy model:
 
@@ -152,18 +130,37 @@ python src/gui.py
    - Click "Load Model" to load it
    - Wait for the confirmation message
 
-2. **Enter Text**:
+2. **Configure Processing Options**:
+   - **Transliterate Cyrillic to Latin**: Enabled by default (if `cyrtranslit` is installed)
+   - This option automatically converts Cyrillic text to Latin before processing for better entity recognition
+
+3. **Enter Text**:
    - Type or paste text into the input area
    - Or click "Load Sample Text" for a demo
+   - Or click "Load from File" to load a text file from the `inputs/` folder
 
-3. **Process Text**:
+4. **Process Text**:
    - Click "Process Text (NER)" to analyze the text
    - View entities in the results section
    - HTML visualization is automatically saved
 
-4. **View Results**:
+5. **View Results**:
    - Click "View Last Output" to open the HTML in your browser
    - Click "Open Output Folder" to see all saved outputs
+
+### Cyrillic Transliteration Feature
+
+The application includes automatic Cyrillic-to-Latin transliteration to improve NER accuracy when using models trained primarily on Latin script:
+
+- **Automatic Conversion**: Converts Cyrillic text to Latin script (supports Serbian, Montenegrin, Macedonian, Russian, Ukrainian, Kazakh, and Bulgarian) before processing
+- **Enabled by Default**: The transliteration option is checked by default (if `cyrtranslit` is installed)
+- **Toggleable**: Can be disabled via the checkbox if you prefer to process Cyrillic text directly
+- **Preserves Entities**: Latin text remains unchanged; only Cyrillic characters are transliterated
+- **Better Accuracy**: Models trained on Latin script typically perform better with transliterated text
+
+**Example**: The Cyrillic text "Новак Ђоковић рођен у Београду" is automatically transliterated to "Novak Đoković rođen u Beogradu" before being sent to the NER pipeline.
+
+**Note**: If you have a model specifically trained on Cyrillic text, you can disable this option by unchecking the "Transliterate Cyrillic to Latin before processing" checkbox.
 
 ### Example
 
@@ -252,6 +249,7 @@ Note: Transformer models are larger and slower but more accurate.
 
 Core dependencies (installed automatically):
 - `spacy>=3.7.0` - Core NLP library
+- `cyrtranslit>=1.0.0` - Cyrillic-to-Latin transliteration
 - `tkinter-tooltip>=2.0.0` - GUI tooltips (optional)
 
 Optional:

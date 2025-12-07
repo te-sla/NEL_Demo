@@ -11,6 +11,7 @@ Jednostavna demonstraciona aplikacija za Prepoznavanje Imenovanih Entiteta (NER)
 - ✅ **Jednostavan GUI**: Korisnički interfejs napravljen sa tkinter-om
 - ✅ **Upravljanje modelima**: Učitavanje custom treniranih modela iz `models/` direktorijuma
 - ✅ **Obrada teksta**: Obrada bilo kog teksta i ekstrakcija imenovanih entiteta
+- ✅ **Transliteracija ćirilice**: Automatska transliteracija sa ćiriličnog na latinično pismo za bolju NER tačnost
 - ✅ **Pametno deljenje teksta**: Automatski deli velike tekstove po granicama paragrafa
 - ✅ **Vizuelni izlaz**: Generisanje lepih HTML vizuelizacija koristeći displaCy
 - ✅ **Upravljanje izlazom**: Čuvanje svih izlaza u `data/outputs/` sa vremenskim oznakama
@@ -33,6 +34,8 @@ NEL_Demo/
 ├── models/                 # Postavite vaše trenirane modele ovde
 │   └── {ime_modela}/
 │       └── model-best/     # Vaš trenirani spaCy model
+├── inputs/                 # Ulazni tekstualni fajlovi
+│   └── sample_text.txt     # Primer tekstualnog fajla
 ├── data/
 │   └── outputs/            # HTML vizuelizacije izlaza
 └── venv/                   # Virtuelno okruženje (kreirano od strane instalera)
@@ -49,7 +52,7 @@ NEL_Demo/
 ### Windows (PowerShell)
 
 1. Otvorite PowerShell
-2. Navigirajte do direktorijuma projekta
+2. Pozicionirajte se u direktorijum projekta (cd komanda)
 3. Pokrenite instaler:
 
 ```powershell
@@ -59,7 +62,7 @@ NEL_Demo/
 ### Linux/Mac (Bash)
 
 1. Otvorite terminal
-2. Navigirajte do direktorijuma projekta
+2. Pozicionirajte se u direktorijum projekta  
 3. Pokrenite instaler:
 
 ```bash
@@ -74,42 +77,17 @@ Instaler će:
 3. ✅ Aktivirati virtuelno okruženje
 4. ✅ Ažurirati pip na najnoviju verziju
 5. ✅ Pitati vas da izaberete između:
-   - Standardni spaCy (brži, manji)
-   - spacy-transformers (precizniji, veći)
+   - Standardnog spaCy (brži, manji)
+   - spacy-transformera (precizniji, veći)
 6. ✅ Instalirati sve potrebne zavisnosti
 
 ## Podešavanje modela
 
-### Opcija 1: Preuzimanje pre-treniranog modela
+### Unapred instaliran model
 
-Nakon instalacije, aktivirajte vaše virtuelno okruženje i preuzmite spaCy model:
+Srpski NER+NEL model (`trsic4-CNN-ner-nel`) je već instaliran u `models/` direktorijumu i spreman je za upotrebu. Nije potrebno dodatno podešavanje!
 
-**Windows:**
-```powershell
-.\venv\Scripts\Activate.ps1
-python -m spacy download en_core_web_sm
-```
-
-**Linux/Mac:**
-```bash
-source venv/bin/activate
-python -m spacy download en_core_web_sm
-```
-
-Zatim kreirajte strukturu direktorijuma i kopirajte model:
-```bash
-# Kreirajte strukturu direktorijuma
-mkdir -p models/en_core_web_sm/model-best
-
-# Pronađite i kopirajte model (stvarni model je u verzioniranom poddirektorijumu)
-# Linux/Mac:
-python -c "import en_core_web_sm, shutil, pathlib; src = pathlib.Path(en_core_web_sm.__file__).parent / list(pathlib.Path(en_core_web_sm.__file__).parent.glob('en_core_web_sm-*'))[0].name; shutil.copytree(src, 'models/en_core_web_sm/model-best', dirs_exist_ok=True)"
-
-# Windows PowerShell:
-# python -c "import en_core_web_sm, shutil, pathlib; src = pathlib.Path(en_core_web_sm.__file__).parent / list(pathlib.Path(en_core_web_sm.__file__).parent.glob('en_core_web_sm-*'))[0].name; shutil.copytree(src, 'models/en_core_web_sm/model-best', dirs_exist_ok=True)"
-```
-
-### Opcija 2: Korišćenje vašeg sopstvenog treniranog modela
+### Korišćenje vašeg sopstvenog treniranog modela
 
 Ako imate trenirani spaCy model:
 
@@ -151,18 +129,37 @@ python src/gui.py
    - Kliknite "Load Model" da ga učitate
    - Sačekajte poruku potvrde
 
-2. **Unesite tekst**:
+2. **Konfigurišite opcije obrade**:
+   - **Transliteracija ćirilice u latinicu**: Podrazumevano uključeno (ako je instaliran paket `cyrtranslit`)
+   - Ova opcija automatski konvertuje ćirilični tekst u latinicu pre obrade za bolje prepoznavanje entiteta
+
+3. **Unesite tekst**:
    - Ukucajte ili nalepite tekst u polje za unos
    - Ili kliknite "Load Sample Text" za demo
+   - Ili kliknite "Load from File" da učitate tekstualni fajl iz `inputs/` fascikle
 
-3. **Obradite tekst**:
+4. **Obradite tekst**:
    - Kliknite "Process Text (NER)" da analizirate tekst
    - Pogledajte entitete u sekciji rezultata
    - HTML vizuelizacija se automatski čuva
 
-4. **Pogledajte rezultate**:
+5. **Pogledajte rezultate**:
    - Kliknite "View Last Output" da otvorite HTML u vašem pretraživaču
    - Kliknite "Open Output Folder" da vidite sve sačuvane izlaze
+
+### Funkcija transliteracije ćirilice
+
+Aplikacija uključuje automatsku transliteraciju ćirilice u latinicu za poboljšanje tačnosti NER-a kada koristite modele trenirane prvenstveno na latiničnom pismu:
+
+- **Automatska konverzija**: Konvertuje ćirilični tekst sa sedam jezika (srpski, crnogorski, makedonski, ruski, ukrajinski, kazahstanski, bugarski) u latinično pismo pre obrade
+- **Podrazumevano uključeno**: Opcija transliteracije je podrazumevano označena (ako je `cyrtranslit` instaliran)
+- **Može se isključiti**: Može se onemogućiti preko checkbox-a ako preferirate direktnu obradu ćiriličnog teksta
+- **Čuva entitete**: Latinični tekst ostaje nepromenjen; samo se ćirilični karakteri transliterišu
+- **Bolja tačnost**: Modeli trenirani na latiničnom pismu tipično imaju bolje performanse sa transliterovanim tekstom
+
+**Primer**: Ćirilični tekst "Новак Ђоковић рођен у Београду" se automatski transliteriše u "Novak Đoković rođen u Beogradu" pre slanja u NER pipeline.
+
+**Napomena**: Ako imate model specifično treniran na ćiriličnom tekstu, možete onemogućiti ovu opciju tako što ćete odznačiti opciju "Transliterate Cyrillic to Latin before processing".
 
 ### Primer
 
@@ -251,6 +248,7 @@ Napomena: Transformer modeli su veći i sporiji, ali precizniji.
 
 Osnovne zavisnosti (instaliraju se automatski):
 - `spacy>=3.7.0` - Osnovna NLP biblioteka
+- `cyrtranslit>=1.0.0` - Transliteracija ćirilice u latinicu
 - `tkinter-tooltip>=2.0.0` - GUI tooltips (opciono)
 
 Opciono:

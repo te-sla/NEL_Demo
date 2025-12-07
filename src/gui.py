@@ -32,18 +32,25 @@ try:
     from text_chunker import (
         process_text_in_chunks, 
         split_into_paragraphs, 
-        DEFAULT_MAX_CHUNK_SIZE
+        DEFAULT_MAX_CHUNK_SIZE,
+        transliterate_to_latin,
+        CYRTRANSLIT_AVAILABLE
     )
 except ImportError:
     print("Warning: text_chunker module not found. Large text processing may fail.")
     process_text_in_chunks = None
     split_into_paragraphs = None
+    transliterate_to_latin = None
+    CYRTRANSLIT_AVAILABLE = False
     # Fallback value matches the default in text_chunker.py
     DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
 
 # Attribution URLs
 TESLA_URL = "https://tesla.rgf.bg.ac.rs/"
 JERTEH_URL = "https://jerteh.rs/"
+
+# File loading constants
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB limit for file loading
 
 
 class ToolTip:
@@ -86,6 +93,9 @@ class ToolTip:
 class NERDemoGUI:
     """Main GUI application for NER+NEL demonstration."""
     
+    # Default language code for transliteration
+    DEFAULT_TRANSLITERATION_LANG = 'sr'
+    
     def __init__(self, root):
         """Initialize the GUI application.
         
@@ -100,9 +110,15 @@ class NERDemoGUI:
         self.model_name = None
         self.output_dir = PROJECT_ROOT / "data" / "outputs"
         self.models_dir = PROJECT_ROOT / "models"
+        self.inputs_dir = PROJECT_ROOT / "inputs"
         
-        # Ensure output directory exists
+        # Transliteration setting (enabled by default if cyrtranslit is available)
+        self.transliterate_enabled = CYRTRANSLIT_AVAILABLE
+        
+        # Ensure output and inputs directories exist
+        
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.inputs_dir.mkdir(parents=True, exist_ok=True)
         
         self.create_widgets()
         self.check_models()
@@ -190,6 +206,40 @@ class NERDemoGUI:
         self.model_status_label = ttk.Label(model_frame, text="No model loaded", foreground="red")
         self.model_status_label.grid(row=1, column=0, columnspan=4, sticky=tk.W, padx=5, pady=5)
         
+        # Transliteration options frame
+        transliterate_frame = ttk.LabelFrame(self.root, text="Text Processing Options", padding=10)
+        transliterate_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        self.transliterate_var = tk.BooleanVar(value=self.transliterate_enabled)
+        transliterate_checkbox = ttk.Checkbutton(
+            transliterate_frame,
+            text="Transliterate Cyrillic to Latin before processing",
+            variable=self.transliterate_var,
+            state="normal" if CYRTRANSLIT_AVAILABLE else "disabled"
+        )
+        transliterate_checkbox.grid(row=0, column=0, sticky=tk.W, padx=5)
+        
+        if CYRTRANSLIT_AVAILABLE:
+            transliterate_help = ttk.Label(
+                transliterate_frame,
+                text="ℹ️ Recommended for models trained on Latin script",
+                foreground="gray",
+                font=("Arial", 8)
+            )
+            transliterate_help.grid(row=1, column=0, sticky=tk.W, padx=25, pady=(0, 5))
+            ToolTip(transliterate_help, 
+                   "The NER model may have been trained primarily on Latin script.\n"
+                   "Transliterating Cyrillic text to Latin can improve entity recognition.\n"
+                   "This option is enabled by default.")
+        else:
+            transliterate_warning = ttk.Label(
+                transliterate_frame,
+                text="⚠️ Install 'cyrtranslit' package to enable transliteration",
+                foreground="orange",
+                font=("Arial", 8)
+            )
+            transliterate_warning.grid(row=1, column=0, sticky=tk.W, padx=25, pady=(0, 5))
+        
         # Input frame
         input_frame = ttk.LabelFrame(self.root, text="Input Text", padding=10)
         input_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
@@ -210,6 +260,12 @@ class NERDemoGUI:
             sample_frame,
             text="Load Sample Text",
             command=self.load_sample_text
+        ).pack(side=tk.LEFT, padx=5)
+        
+        ttk.Button(
+            sample_frame,
+            text="Load from File",
+            command=self.load_text_from_file
         ).pack(side=tk.LEFT, padx=5)
         
         ttk.Button(
@@ -385,6 +441,55 @@ class NERDemoGUI:
         self.input_text.insert(1.0, sample_text)
         self.status_var.set("Sample text loaded")
     
+    def load_text_from_file(self):
+        """Load text from a file using file dialog."""
+        # Open file dialog starting in the inputs directory if it exists
+        initial_dir = self.inputs_dir if self.inputs_dir.exists() else None
+        file_path = filedialog.askopenfilename(
+            title="Select Text File",
+            initialdir=initial_dir,
+            filetypes=[
+                ("Text Files", "*.txt"),
+                ("All Files", "*.*")
+            ]
+        )
+        
+        if file_path:
+            try:
+                # Check file size to prevent memory issues
+                file_size = Path(file_path).stat().st_size
+                if file_size > MAX_FILE_SIZE:
+                    messagebox.showwarning(
+                        "File Too Large",
+                        f"File size ({file_size / 1024 / 1024:.1f} MB) exceeds maximum allowed size (10 MB)."
+                    )
+                    self.status_var.set("File too large to load")
+                    return
+                
+                # Try to read the file with UTF-8 encoding first
+                try:
+                    with open(file_path, 'r', encoding='utf-8', errors='strict') as f:
+                        text = f.read()
+                except UnicodeDecodeError:
+                    # Fallback to latin-1 encoding if UTF-8 fails (latin-1 accepts all bytes)
+                    with open(file_path, 'r', encoding='latin-1') as f:
+                        text = f.read()
+                
+                # Load into text area
+                self.input_text.delete(1.0, tk.END)
+                self.input_text.insert(1.0, text)
+                
+                # Update status
+                file_name = Path(file_path).name
+                self.status_var.set(f"Loaded file: {file_name}")
+                
+            except Exception as e:
+                messagebox.showerror(
+                    "Error Loading File",
+                    f"Failed to load file:\n{str(e)}"
+                )
+                self.status_var.set("Error loading file")
+    
     def process_text(self):
         """Process the input text and display NER results."""
         if self.nlp is None:
@@ -446,6 +551,35 @@ class NERDemoGUI:
                     output_path=output_file,
                     progress_callback=progress_callback
                 )
+                # Get transliteration setting
+                use_transliteration = self.transliterate_var.get()
+                
+                # Process text in chunks with error handling for transliteration
+                try:
+                    all_entities, html, num_chunks = process_text_in_chunks(
+                        self.nlp, 
+                        text, 
+                        max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
+                        output_path=output_file,
+                        transliterate=use_transliteration,
+                        transliterate_lang=self.DEFAULT_TRANSLITERATION_LANG
+                    )
+                except ImportError:
+                    # If transliteration fails, process without it
+                    messagebox.showwarning(
+                        "Transliteration Unavailable",
+                        "The transliteration feature is not available.\n\n"
+                        "To enable this feature, install the required package:\n"
+                        "pip install cyrtranslit\n\n"
+                        "Processing will continue with the original text."
+                    )
+                    all_entities, html, num_chunks = process_text_in_chunks(
+                        self.nlp, 
+                        text, 
+                        max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
+                        output_path=output_file,
+                        transliterate=False
+                    )
                 
                 # Update progress after processing is complete
                 self.progress_var.set(95)
@@ -501,7 +635,24 @@ class NERDemoGUI:
                 self.status_var.set("Processing text...")
                 self.root.update()
                 
-                doc = self.nlp(text)
+                # Get transliteration setting and apply if enabled
+                use_transliteration = self.transliterate_var.get()
+                text_to_process = text
+                
+                if use_transliteration and transliterate_to_latin is not None:
+                    try:
+                        text_to_process = transliterate_to_latin(text, self.DEFAULT_TRANSLITERATION_LANG)
+                    except ImportError:
+                        messagebox.showwarning(
+                            "Transliteration Unavailable",
+                            "The transliteration feature is not available.\n\n"
+                            "To enable this feature, install the required package:\n"
+                            "pip install cyrtranslit\n\n"
+                            "Processing will continue with the original text."
+                        )
+                        text_to_process = text
+                
+                doc = self.nlp(text_to_process)
                 
                 self.progress_var.set(70)
                 self.root.update()
