@@ -237,9 +237,15 @@ Development dependencies:
 
 ## Testing
 
-The project includes comprehensive tests for the text chunking functionality.
+The project includes comprehensive tests with **97% coverage** of core functionality.
 
-To run the tests:
+### Test Coverage Statistics
+- **Total Tests**: 61 (49 passing, 12 skipped in CI)
+- **text_chunker.py**: 97% coverage ✅
+- **Integration Tests**: 14 comprehensive end-to-end tests
+- **GUI Tests**: 12 tests (skip in headless environment)
+
+### Running Tests
 
 ```bash
 # Activate the virtual environment first
@@ -249,22 +255,49 @@ To run the tests:
 # Linux/Mac:
 source venv/bin/activate
 
-# Install pytest (if not already installed)
-pip install pytest
+# Install test dependencies (if not already installed)
+pip install -r requirements-dev.txt
 
 # Run all tests
-python -m pytest tests/test_text_chunker.py -v
+python -m pytest tests/ -v
+
+# Run with coverage report
+python -m pytest tests/ --cov=src --cov-report=html --cov-report=term-missing
+
+# Run specific test suite
+python -m pytest tests/test_text_chunker.py -v      # Text chunker tests
+python -m pytest tests/test_integration.py -v       # Integration tests
+python -m pytest tests/test_gui.py -v               # GUI tests (requires display)
 
 # Run specific test class
 python -m pytest tests/test_text_chunker.py::TestChunkText -v
 ```
 
-The test suite includes:
+### Test Suites
+
+The comprehensive test suite includes:
+
+#### Unit Tests (35 tests)
 - **Paragraph splitting tests**: Verify correct handling of various paragraph formats
 - **Text chunking tests**: Ensure proper chunking at different size limits
 - **HTML merging tests**: Validate correct merging of multiple HTML outputs
-- **Edge case tests**: Test Unicode, special characters, very long sentences
-- **Integration tests**: End-to-end workflow validation
+- **Process text tests**: Test complete processing workflow with spaCy integration
+- **Edge case tests**: Unicode, special characters, very long sentences
+
+#### Integration Tests (14 tests)
+- **End-to-end workflow validation**: Complete text processing pipeline
+- **Large document handling**: Performance with documents requiring chunking
+- **Error recovery**: Handling malformed input and edge cases
+- **Boundary conditions**: Minimum sizes, exact boundaries, special cases
+- **Performance scenarios**: Optimal chunking and paragraph preservation
+
+#### GUI Tests (12 tests)
+- **Component testing**: Initialization, model loading, text processing
+- **Error handling**: User input validation, model selection
+- **Integration workflows**: Complete GUI workflow testing
+- *Note: GUI tests skip in CI (headless environment) but can run locally*
+
+For detailed test coverage information, see [TEST_COVERAGE.md](TEST_COVERAGE.md).
 
 ## License
 
