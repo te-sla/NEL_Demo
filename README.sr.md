@@ -292,7 +292,7 @@ Test suite uključuje:
 
 ## Licenca
 
-Ovaj projekat je licenciran pod MIT licencom - pogledajte LICENSE fajl za detalje.
+Ovaj projekat je posvećen javnom domenu pod CC0 1.0 Universal (CC0 1.0) Public Domain Dedication - pogledajte LICENSE fajl za detalje.
 
 ## Doprinos
 

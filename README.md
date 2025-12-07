@@ -291,7 +291,7 @@ The test suite includes:
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is dedicated to the public domain under CC0 1.0 Universal (CC0 1.0) Public Domain Dedication - see the LICENSE file for details.
 
 ## Contributing
 
