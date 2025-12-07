@@ -34,6 +34,8 @@ NEL_Demo/
 ├── models/                 # Postavite vaše trenirane modele ovde
 │   └── {ime_modela}/
 │       └── model-best/     # Vaš trenirani spaCy model
+├── inputs/                 # Ulazni tekstualni fajlovi
+│   └── sample_text.txt     # Primer tekstualnog fajla
 ├── data/
 │   └── outputs/            # HTML vizuelizacije izlaza
 └── venv/                   # Virtuelno okruženje (kreirano od strane instalera)
@@ -50,7 +52,7 @@ NEL_Demo/
 ### Windows (PowerShell)
 
 1. Otvorite PowerShell
-2. Navigirajte do direktorijuma projekta
+2. Pozicionirajte se u direktorijum projekta (cd komanda)
 3. Pokrenite instaler:
 
 ```powershell
@@ -60,7 +62,7 @@ NEL_Demo/
 ### Linux/Mac (Bash)
 
 1. Otvorite terminal
-2. Navigirajte do direktorijuma projekta
+2. Pozicionirajte se u direktorijum projekta  
 3. Pokrenite instaler:
 
 ```bash
@@ -75,42 +77,17 @@ Instaler će:
 3. ✅ Aktivirati virtuelno okruženje
 4. ✅ Ažurirati pip na najnoviju verziju
 5. ✅ Pitati vas da izaberete između:
-   - Standardni spaCy (brži, manji)
-   - spacy-transformers (precizniji, veći)
+   - Standardnog spaCy (brži, manji)
+   - spacy-transformera (precizniji, veći)
 6. ✅ Instalirati sve potrebne zavisnosti
 
 ## Podešavanje modela
 
-### Opcija 1: Preuzimanje pre-treniranog modela
+### Unapred instaliran model
 
-Nakon instalacije, aktivirajte vaše virtuelno okruženje i preuzmite spaCy model:
+Srpski NER+NEL model (`trsic4-CNN-ner-nel`) je već instaliran u `models/` direktorijumu i spreman je za upotrebu. Nije potrebno dodatno podešavanje!
 
-**Windows:**
-```powershell
-.\venv\Scripts\Activate.ps1
-python -m spacy download en_core_web_sm
-```
-
-**Linux/Mac:**
-```bash
-source venv/bin/activate
-python -m spacy download en_core_web_sm
-```
-
-Zatim kreirajte strukturu direktorijuma i kopirajte model:
-```bash
-# Kreirajte strukturu direktorijuma
-mkdir -p models/en_core_web_sm/model-best
-
-# Pronađite i kopirajte model (stvarni model je u verzioniranom poddirektorijumu)
-# Linux/Mac:
-python -c "import en_core_web_sm, shutil, pathlib; src = pathlib.Path(en_core_web_sm.__file__).parent / list(pathlib.Path(en_core_web_sm.__file__).parent.glob('en_core_web_sm-*'))[0].name; shutil.copytree(src, 'models/en_core_web_sm/model-best', dirs_exist_ok=True)"
-
-# Windows PowerShell:
-# python -c "import en_core_web_sm, shutil, pathlib; src = pathlib.Path(en_core_web_sm.__file__).parent / list(pathlib.Path(en_core_web_sm.__file__).parent.glob('en_core_web_sm-*'))[0].name; shutil.copytree(src, 'models/en_core_web_sm/model-best', dirs_exist_ok=True)"
-```
-
-### Opcija 2: Korišćenje vašeg sopstvenog treniranog modela
+### Korišćenje vašeg sopstvenog treniranog modela
 
 Ako imate trenirani spaCy model:
 
@@ -159,6 +136,7 @@ python src/gui.py
 3. **Unesite tekst**:
    - Ukucajte ili nalepite tekst u polje za unos
    - Ili kliknite "Load Sample Text" za demo
+   - Ili kliknite "Load from File" da učitate tekstualni fajl iz `inputs/` fascikle
 
 4. **Obradite tekst**:
    - Kliknite "Process Text (NER)" da analizirate tekst

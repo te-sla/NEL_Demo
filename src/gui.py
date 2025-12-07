@@ -49,6 +49,9 @@ except ImportError:
 TESLA_URL = "https://tesla.rgf.bg.ac.rs/"
 JERTEH_URL = "https://jerteh.rs/"
 
+# File loading constants
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB limit for file loading
+
 
 class ToolTip:
     """Simple tooltip widget for tkinter labels."""
@@ -107,12 +110,15 @@ class NERDemoGUI:
         self.model_name = None
         self.output_dir = PROJECT_ROOT / "data" / "outputs"
         self.models_dir = PROJECT_ROOT / "models"
+        self.inputs_dir = PROJECT_ROOT / "inputs"
         
         # Transliteration setting (enabled by default if cyrtranslit is available)
         self.transliterate_enabled = CYRTRANSLIT_AVAILABLE
         
-        # Ensure output directory exists
+        # Ensure output and inputs directories exist
+        
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.inputs_dir.mkdir(parents=True, exist_ok=True)
         
         self.create_widgets()
         self.check_models()
@@ -254,6 +260,12 @@ class NERDemoGUI:
             sample_frame,
             text="Load Sample Text",
             command=self.load_sample_text
+        ).pack(side=tk.LEFT, padx=5)
+        
+        ttk.Button(
+            sample_frame,
+            text="Load from File",
+            command=self.load_text_from_file
         ).pack(side=tk.LEFT, padx=5)
         
         ttk.Button(
@@ -409,6 +421,55 @@ class NERDemoGUI:
         self.input_text.delete(1.0, tk.END)
         self.input_text.insert(1.0, sample_text)
         self.status_var.set("Sample text loaded")
+    
+    def load_text_from_file(self):
+        """Load text from a file using file dialog."""
+        # Open file dialog starting in the inputs directory if it exists
+        initial_dir = self.inputs_dir if self.inputs_dir.exists() else None
+        file_path = filedialog.askopenfilename(
+            title="Select Text File",
+            initialdir=initial_dir,
+            filetypes=[
+                ("Text Files", "*.txt"),
+                ("All Files", "*.*")
+            ]
+        )
+        
+        if file_path:
+            try:
+                # Check file size to prevent memory issues
+                file_size = Path(file_path).stat().st_size
+                if file_size > MAX_FILE_SIZE:
+                    messagebox.showwarning(
+                        "File Too Large",
+                        f"File size ({file_size / 1024 / 1024:.1f} MB) exceeds maximum allowed size (10 MB)."
+                    )
+                    self.status_var.set("File too large to load")
+                    return
+                
+                # Try to read the file with UTF-8 encoding first
+                try:
+                    with open(file_path, 'r', encoding='utf-8', errors='strict') as f:
+                        text = f.read()
+                except UnicodeDecodeError:
+                    # Fallback to latin-1 encoding if UTF-8 fails (latin-1 accepts all bytes)
+                    with open(file_path, 'r', encoding='latin-1') as f:
+                        text = f.read()
+                
+                # Load into text area
+                self.input_text.delete(1.0, tk.END)
+                self.input_text.insert(1.0, text)
+                
+                # Update status
+                file_name = Path(file_path).name
+                self.status_var.set(f"Loaded file: {file_name}")
+                
+            except Exception as e:
+                messagebox.showerror(
+                    "Error Loading File",
+                    f"Failed to load file:\n{str(e)}"
+                )
+                self.status_var.set("Error loading file")
     
     def process_text(self):
         """Process the input text and display NER results."""
