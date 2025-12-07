@@ -20,6 +20,7 @@ from text_chunker import (
     merge_html_outputs,
     process_text_in_chunks,
     transliterate_to_latin,
+    add_wikidata_links,
     DEFAULT_MAX_CHUNK_SIZE,
     CYRTRANSLIT_AVAILABLE
 )
@@ -468,6 +469,186 @@ class TestTransliteration:
         
         with pytest.raises(ImportError, match="cyrtranslit is required"):
             transliterate_to_latin("test", 'sr')
+
+
+class TestAddWikidataLinks:
+    """Test suite for add_wikidata_links function."""
+    
+    def test_adds_wikidata_links_for_qids(self):
+        """Test that Wikidata links are added for Q-IDs in placeholder links."""
+        # Create mock HTML with placeholder links
+        html = '''<div class="entities">
+<mark class="entity">
+    National Bank of Serbia
+    <span>ORG
+ <a style="text-decoration: none; color: inherit; font-weight: normal" href="#">Q1194664</a>
+</span>
+</mark>
+</div>'''
+        
+        # Create a mock doc with entities
+        try:
+            import spacy
+            nlp = spacy.blank("en")
+            doc = nlp("National Bank of Serbia")
+        except ImportError:
+            pytest.skip("spaCy not installed")
+        
+        # Call the function
+        result = add_wikidata_links(html, doc)
+        
+        # Check that the link was replaced
+        assert 'href="https://www.wikidata.org/wiki/Q1194664"' in result
+        assert 'target="_blank"' in result
+        assert 'href="#">Q1194664</a>' not in result
+    
+    def test_handles_multiple_qids(self):
+        """Test handling multiple Q-IDs in the same HTML."""
+        html = '''<div class="entities">
+<mark class="entity">
+    <span>ORG <a href="#">Q1194664</a></span>
+</mark>
+ is in 
+<mark class="entity">
+    <span>LOC <a href="#">Q3711</a></span>
+</mark>
+ in 
+<mark class="entity">
+    <span>LOC <a href="#">Q403</a></span>
+</mark>
+</div>'''
+        
+        try:
+            import spacy
+            nlp = spacy.blank("en")
+            doc = nlp("Test")
+        except ImportError:
+            pytest.skip("spaCy not installed")
+        
+        result = add_wikidata_links(html, doc)
+        
+        # Check all links were replaced
+        assert 'href="https://www.wikidata.org/wiki/Q1194664"' in result
+        assert 'href="https://www.wikidata.org/wiki/Q3711"' in result
+        assert 'href="https://www.wikidata.org/wiki/Q403"' in result
+        assert 'href="#">Q' not in result
+    
+    def test_preserves_nil_entries(self):
+        """Test that NIL entries are preserved unchanged."""
+        html = '''<div class="entities">
+<mark class="entity">
+    <span>PER <a href="#">NIL</a></span>
+</mark>
+</div>'''
+        
+        try:
+            import spacy
+            nlp = spacy.blank("en")
+            doc = nlp("Test")
+        except ImportError:
+            pytest.skip("spaCy not installed")
+        
+        result = add_wikidata_links(html, doc)
+        
+        # NIL should remain unchanged
+        assert '<a href="#">NIL</a>' in result
+        assert 'wikidata.org' not in result
+    
+    def test_empty_entities_returns_unchanged(self):
+        """Test that HTML without entities is returned unchanged."""
+        html = '<div class="entities">Plain text without entities</div>'
+        
+        try:
+            import spacy
+            nlp = spacy.blank("en")
+            doc = nlp("Text")
+        except ImportError:
+            pytest.skip("spaCy not installed")
+        
+        result = add_wikidata_links(html, doc)
+        assert result == html
+    
+    def test_handles_different_qid_formats(self):
+        """Test handling Q-IDs with different number lengths."""
+        html = '''<div class="entities">
+<a href="#">Q1</a>
+<a href="#">Q123</a>
+<a href="#">Q123456</a>
+<a href="#">Q123456789</a>
+</div>'''
+        
+        try:
+            import spacy
+            nlp = spacy.blank("en")
+            doc = nlp("Test")
+        except ImportError:
+            pytest.skip("spaCy not installed")
+        
+        result = add_wikidata_links(html, doc)
+        
+        # All Q-IDs should be replaced
+        assert 'href="https://www.wikidata.org/wiki/Q1"' in result
+        assert 'href="https://www.wikidata.org/wiki/Q123"' in result
+        assert 'href="https://www.wikidata.org/wiki/Q123456"' in result
+        assert 'href="https://www.wikidata.org/wiki/Q123456789"' in result
+        assert result.count('target="_blank"') == 4
+    
+    def test_does_not_affect_other_links(self):
+        """Test that other links in the HTML are not affected."""
+        html = '''<div class="entities">
+<a href="https://example.com">External Link</a>
+<a href="#section">Anchor Link</a>
+<a href="#">Q1194664</a>
+</div>'''
+        
+        try:
+            import spacy
+            nlp = spacy.blank("en")
+            doc = nlp("Test")
+        except ImportError:
+            pytest.skip("spaCy not installed")
+        
+        result = add_wikidata_links(html, doc)
+        
+        # Other links should remain unchanged
+        assert 'href="https://example.com">External Link</a>' in result
+        assert 'href="#section">Anchor Link</a>' in result
+        # Only Q-ID link should be changed
+        assert 'href="https://www.wikidata.org/wiki/Q1194664"' in result
+    
+    def test_integration_with_displacy_output(self):
+        """Test with actual displaCy HTML output structure."""
+        try:
+            import spacy
+            from spacy import displacy
+            from spacy.tokens import Span
+        except ImportError:
+            pytest.skip("spaCy not installed")
+        
+        # Create a doc with an entity that has a Q-ID
+        nlp = spacy.blank("en")
+        doc = nlp("The National Bank of Serbia is in Belgrade.")
+        
+        # Create entities with Q-IDs
+        ent1 = Span(doc, 1, 5, label="ORG")  # "National Bank of Serbia"
+        ent1.kb_id_ = "Q1194664"
+        ent2 = Span(doc, 7, 8, label="LOC")  # "Belgrade"
+        ent2.kb_id_ = "Q3711"
+        doc.ents = [ent1, ent2]
+        
+        # Generate HTML
+        html = displacy.render(doc, style="ent", page=False)
+        
+        # Apply the function
+        result = add_wikidata_links(html, doc)
+        
+        # Verify the links are correct
+        assert 'href="https://www.wikidata.org/wiki/Q1194664"' in result
+        assert 'href="https://www.wikidata.org/wiki/Q3711"' in result
+        assert 'target="_blank"' in result
+        # Make sure placeholder links are gone
+        assert 'href="#">Q1194664</a>' not in result
+        assert 'href="#">Q3711</a>' not in result
 
 
 class TestIntegration:
