@@ -256,6 +256,8 @@ The project includes comprehensive tests with **97% coverage** of core functiona
 source venv/bin/activate
 
 # Install test dependencies (if not already installed)
+# Note: requirements-dev.txt contains pytest and coverage tools
+# spaCy should already be installed from requirements.txt
 pip install -r requirements-dev.txt
 
 # Run all tests
