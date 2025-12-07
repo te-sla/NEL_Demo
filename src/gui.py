@@ -15,10 +15,6 @@ from pathlib import Path
 from datetime import datetime
 import webbrowser
 
-# Add the project root to the path
-PROJECT_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
-
 try:
     import spacy
     from spacy import displacy
@@ -29,7 +25,7 @@ except ImportError:
 
 # Import text chunker module
 try:
-    from text_chunker import (
+    from .text_chunker import (
         process_text_in_chunks, 
         split_into_paragraphs, 
         DEFAULT_MAX_CHUNK_SIZE,
@@ -37,20 +33,39 @@ try:
         CYRTRANSLIT_AVAILABLE
     )
 except ImportError:
-    print("Warning: text_chunker module not found. Large text processing may fail.")
-    process_text_in_chunks = None
-    split_into_paragraphs = None
-    transliterate_to_latin = None
-    CYRTRANSLIT_AVAILABLE = False
-    # Fallback value matches the default in text_chunker.py
-    DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
+    # Fallback for when running as a script
+    try:
+        from text_chunker import (
+            process_text_in_chunks, 
+            split_into_paragraphs, 
+            DEFAULT_MAX_CHUNK_SIZE,
+            transliterate_to_latin,
+            CYRTRANSLIT_AVAILABLE
+        )
+    except ImportError:
+        # Final fallback if both relative and absolute imports fail
+        import warnings
+        warnings.warn("text_chunker module not found. Large text processing may fail.", ImportWarning)
+        process_text_in_chunks = None
+        split_into_paragraphs = None
+        transliterate_to_latin = None
+        CYRTRANSLIT_AVAILABLE = False
+        # Fallback value matches the default in text_chunker.py
+        DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
 
-# Attribution URLs
-TESLA_URL = "https://tesla.rgf.bg.ac.rs/"
-JERTEH_URL = "https://jerteh.rs/"
-
-# File loading constants
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB limit for file loading
+# Import configuration constants
+try:
+    from .config import TESLA_URL, JERTEH_URL, MAX_FILE_SIZE, PROJECT_ROOT
+except ImportError:
+    # Fallback for when running as a script
+    try:
+        from config import TESLA_URL, JERTEH_URL, MAX_FILE_SIZE, PROJECT_ROOT
+    except ImportError:
+        # Fallback defaults
+        PROJECT_ROOT = Path(__file__).parent.parent
+        TESLA_URL = "https://tesla.rgf.bg.ac.rs/"
+        JERTEH_URL = "https://jerteh.rs/"
+        MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB limit for file loading
 
 
 class ToolTip:
@@ -691,6 +706,18 @@ class NERDemoGUI:
                 self.root.update()
                 
                 html = displacy.render(doc, style="ent", page=True)
+                
+                # Add Wikidata links for entities with Q-IDs
+                try:
+                    from .text_chunker import add_wikidata_links
+                    html = add_wikidata_links(html, doc)
+                except (ImportError, AttributeError):
+                    # Fallback if function not available
+                    try:
+                        from text_chunker import add_wikidata_links
+                        html = add_wikidata_links(html, doc)
+                    except (ImportError, AttributeError):
+                        pass  # Continue without Wikidata links
                 
                 # Save HTML to output directory
                 self.progress_var.set(95)

@@ -166,16 +166,19 @@ The application includes automatic Cyrillic-to-Latin transliteration to improve 
 
 Try this sample text:
 ```
-Народна банка Србије је централна банка Републике Србије са седиштем у Београду. 
-Гувернер Народне банке Србије је Јорgovanka Табаковић која се налази на тој позицији од 2012. године. 
-Новак Ђоковић је српски тенисер рођен у Београду 1987. године.
+Apple Inc. is an American multinational technology company headquartered 
+in Cupertino, California. Tim Cook is the CEO of Apple. The company was 
+founded by Steve Jobs, Steve Wozniak, and Ronald Wayne in 1976.
 ```
 
 The application will:
-- Extract entities like "Народна банка Србије" (ORG), "Јорgovanka Табаковић" (PERSON), "Београд" (GPE)
+- Extract entities like "Apple Inc." (ORG), "Tim Cook" (PERS), "Cupertino" (LOC)
+- Link entities to Wikidata (NEL) with Q-IDs where available
 - Show entity labels and positions
 - Generate an HTML visualization with highlighted entities
 - Save the output to `data/outputs/ner_output_YYYYMMDD_HHMMSS.html`
+
+**Note**: The Serbian NER+NEL model (`trsic4-CNN-ner-nel`) recognizes these entity types: PERS (person), LOC (location), ORG (organization), EVENT, DEMO (demonym), IDEO (ideology), PRODUCT, ROLE, and WORK.
 
 ### Text Processing with Paragraph Chunking
 
@@ -291,7 +294,7 @@ The test suite includes:
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is dedicated to the public domain under CC0 1.0 Universal (CC0 1.0) Public Domain Dedication - see the LICENSE file for details.
 
 ## Contributing
 

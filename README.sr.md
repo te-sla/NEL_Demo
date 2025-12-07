@@ -1,5 +1,7 @@
 # NEL Demo - spaCy NER+NEL GUI
 
+**[🇬🇧 Engleska verzija / English version](README.md)**
+
 Jednostavna demonstraciona aplikacija za Prepoznavanje Imenovanih Entiteta (NER) i Povezivanje Imenovanih Entiteta (NEL) korišćenjem spaCy modela sa minimalnim GUI interfejsom.
 
 ## Karakteristike
@@ -159,22 +161,25 @@ Aplikacija uključuje automatsku transliteraciju ćirilice u latinicu za pobolj�
 
 **Primer**: Ćirilični tekst "Новак Ђоковић рођен у Београду" se automatski transliteriše u "Novak Đoković rođen u Beogradu" pre slanja u NER pipeline.
 
-**Napomena**: Ako imate model specifično treniran na ćiriličnom tekstu, možete onemogućiti ovu opciju tako što ćete odznačiti opciju "Transliterate Cyrillic to Latin before processing".
+**Napomena**: Ako imate model specifično treniran na ćiriličnom tekstu, možete onemogućiti ovu opciju tako što ćete odznačiti polje "Transliteriši ćirilicu u latinicu pre obrade".
 
 ### Primer
 
 Probajte ovaj primer teksta:
 ```
-Apple Inc. je američka multinacionalna tehnološka kompanija sa sedištem 
-u Cupertino, Kalifornija. Tim Cook je CEO Apple-a. Kompaniju su osnovali 
-Steve Jobs, Steve Wozniak i Ronald Wayne 1976. godine.
+Народна банка Србије је централна банка Републике Србије са седиштем у Београду. 
+Гувернер Народне банке Србије је Јоргованка Табаковић која се налази на тој позицији од 2012. године. 
+Новак Ђоковић је српски тенисер рођен у Београду 1987. године.
 ```
 
 Aplikacija će:
-- Ekstraktovati entitete kao što su "Apple Inc." (ORG), "Tim Cook" (PERSON), "Cupertino" (GPE)
+- Ekstraktovati entitete kao što su "Народна банка Србије" (ORG), "Јоргованка Табаковић" (PERS), "Београд" (LOC)
+- Povezati entitete sa Wikidata (NEL) pomoću Q-ID oznaka gde je dostupno
 - Prikazati oznake entiteta i pozicije
 - Generisati HTML vizuelizaciju sa istaknutim entitetima
 - Sačuvati izlaz u `data/outputs/ner_output_YYYYMMDD_HHMMSS.html`
+
+**Napomena**: Srpski NER+NEL model (`trsic4-CNN-ner-nel`) prepoznaje sledeće tipove entiteta: PERS (osoba), LOC (lokacija), ORG (organizacija), EVENT (događaj), DEMO (demоnim), IDEO (ideologija), PRODUCT (proizvod), ROLE (uloga), i WORK (delo).
 
 ### Obrada teksta sa deljenjem po paragrafima
 
@@ -290,7 +295,7 @@ Test suite uključuje:
 
 ## Licenca
 
-Ovaj projekat je licenciran pod MIT licencom - pogledajte LICENSE fajl za detalje.
+Ovaj projekat je posvećen javnom domenu pod CC0 1.0 Universal (CC0 1.0) Public Domain Dedication - pogledajte LICENSE fajl za detalje.
 
 ## Doprinos
 
