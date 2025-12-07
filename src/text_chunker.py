@@ -14,7 +14,7 @@ for efficient processing. This module helps handle larger documents by:
 3. Merging the HTML outputs into a cohesive visualization
 """
 
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Callable
 import re
 import warnings
 from pathlib import Path
@@ -224,7 +224,7 @@ def process_text_in_chunks(
     text: str,
     max_chunk_size: int = DEFAULT_MAX_CHUNK_SIZE,
     output_path: Optional[Path] = None,
-    progress_callback = None
+    progress_callback: Optional[Callable[[int, int], None]] = None
 ) -> Tuple[List, str, int]:
     """
     Process text in chunks using spaCy NLP pipeline and merge results.

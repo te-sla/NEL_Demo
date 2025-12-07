@@ -439,10 +439,6 @@ class NERDemoGUI:
                     self.root.update()
                 
                 # Process text in chunks using the shared function
-                self.progress_var.set(85)
-                self.status_var.set("Merging results...")
-                self.root.update()
-                
                 all_entities, html, num_chunks = process_text_in_chunks(
                     self.nlp, 
                     text, 
@@ -451,7 +447,7 @@ class NERDemoGUI:
                     progress_callback=progress_callback
                 )
                 
-                # Save HTML (already saved by process_text_in_chunks)
+                # Update progress after processing is complete
                 self.progress_var.set(95)
                 self.root.update()
                 
