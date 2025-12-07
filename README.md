@@ -172,10 +172,13 @@ founded by Steve Jobs, Steve Wozniak, and Ronald Wayne in 1976.
 ```
 
 The application will:
-- Extract entities like "Apple Inc." (ORG), "Tim Cook" (PERSON), "Cupertino" (GPE)
+- Extract entities like "Apple Inc." (ORG), "Tim Cook" (PERS), "Cupertino" (LOC)
+- Link entities to Wikidata (NEL) with Q-IDs where available
 - Show entity labels and positions
 - Generate an HTML visualization with highlighted entities
 - Save the output to `data/outputs/ner_output_YYYYMMDD_HHMMSS.html`
+
+**Note**: The Serbian NER+NEL model (`trsic4-CNN-ner-nel`) recognizes these entity types: PERS (person), LOC (location), ORG (organization), EVENT, DEMO (demonym), IDEO (ideology), PRODUCT, ROLE, and WORK.
 
 ### Text Processing with Paragraph Chunking
 

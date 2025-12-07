@@ -173,10 +173,13 @@ Probajte ovaj primer teksta:
 ```
 
 Aplikacija će:
-- Ekstraktovati entitete kao što su "Народна банка Србије" (ORG), "Јоргованка Табаковић" (PERSON), "Београд" (GPE)
+- Ekstraktovati entitete kao što su "Народна банка Србије" (ORG), "Јоргованка Табаковић" (PERS), "Београд" (LOC)
+- Povezati entitete sa Wikidata (NEL) pomoću Q-ID oznaka gde je dostupno
 - Prikazati oznake entiteta i pozicije
 - Generisati HTML vizuelizaciju sa istaknutim entitetima
 - Sačuvati izlaz u `data/outputs/ner_output_YYYYMMDD_HHMMSS.html`
+
+**Napomena**: Srpski NER+NEL model (`trsic4-CNN-ner-nel`) prepoznaje sledeće tipove entiteta: PERS (osoba), LOC (lokacija), ORG (organizacija), EVENT (događaj), DEMO (demоnim), IDEO (ideologija), PRODUCT (proizvod), ROLE (uloga), i WORK (delo).
 
 ### Obrada teksta sa deljenjem po paragrafima
 
