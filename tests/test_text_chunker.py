@@ -194,6 +194,51 @@ class TestMergeHTMLOutputs:
         chunks = [sample_html_chunk, sample_html_chunk]
         result = merge_html_outputs(chunks)
         assert "Document Section Break" in result
+    
+    def test_malformed_html_warning(self, sample_html_chunk):
+        """Test that warning is raised for malformed HTML chunks."""
+        # Create HTML that doesn't match expected pattern
+        # The pattern looks for <div class="entities"...>
+        malformed_html = '''<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .entities { line-height: 2.5; }
+    </style>
+</head>
+<body>
+    <div class="wrongclass">No entities div here</div>
+</body>
+</html>'''
+        # Use multiple chunks so we don't return early
+        chunks = [sample_html_chunk, malformed_html]
+        
+        # Should raise a warning for malformed chunk
+        import warnings
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = merge_html_outputs(chunks)
+            
+            # Check that a warning was raised
+            assert len(w) >= 1
+            # Verify the warning message
+            warning_found = any("doesn't match expected HTML pattern" in str(warning.message) for warning in w)
+            assert warning_found, f"Expected warning not found. Warnings: {[str(warning.message) for warning in w]}"
+    
+    def test_mixed_valid_and_malformed_html(self, sample_html_chunk):
+        """Test merging with mix of valid and malformed HTML."""
+        malformed_html = '<html><body>No entities div here</body></html>'
+        chunks = [sample_html_chunk, malformed_html]
+        
+        import warnings
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = merge_html_outputs(chunks)
+            
+            # Should still produce output
+            assert result.startswith("<!DOCTYPE html>")
+            # Should have warned about malformed chunk
+            assert len(w) > 0
 
 
 class TestProcessTextInChunks:
@@ -222,19 +267,94 @@ class TestProcessTextInChunks:
         with pytest.raises(ValueError, match="text cannot be empty"):
             process_text_in_chunks(DummyNLP(), "   \n\n   ")
     
-    @pytest.mark.skip(reason="Requires actual spaCy model, tested in integration")
-    def test_small_text_processing(self):
-        """Test processing small text that fits in one chunk."""
-        # This test requires an actual spaCy model to work with displaCy
-        # It's better tested with integration tests that use real models
-        pass
+    def test_displacy_import_error(self):
+        """Test that ImportError is raised when displacy is not available."""
+        # Mock the DISPLACY_AVAILABLE flag
+        import text_chunker
+        original_value = text_chunker.DISPLACY_AVAILABLE
+        
+        try:
+            # Temporarily set DISPLACY_AVAILABLE to False
+            text_chunker.DISPLACY_AVAILABLE = False
+            
+            class DummyNLP:
+                pass
+            
+            with pytest.raises(ImportError, match="spacy.displacy is required"):
+                process_text_in_chunks(DummyNLP(), "Some text")
+        finally:
+            # Restore original value
+            text_chunker.DISPLACY_AVAILABLE = original_value
     
-    @pytest.mark.skip(reason="Requires actual spaCy model, tested in integration")
-    def test_large_text_chunking(self):
-        """Test processing large text that requires chunking."""
-        # This test requires an actual spaCy model to work with displaCy
-        # It's better tested with integration tests that use real models
-        pass
+    def test_with_mock_spacy_model(self):
+        """Test processing with a mock spaCy model using real spacy blank model."""
+        try:
+            import spacy
+            # Use a real blank model instead of mocking
+            nlp = spacy.blank("en")
+            
+            text = "This is a test text with some content."
+            
+            # This should work with the blank model
+            entities, html, num_chunks = process_text_in_chunks(nlp, text)
+            
+            # Blank model won't find entities, but should still process
+            assert isinstance(entities, list)
+            assert num_chunks == 1
+            assert isinstance(html, str)
+            assert len(html) > 0
+            # Verify HTML structure
+            assert "<!DOCTYPE html>" in html
+        except ImportError:
+            pytest.skip("spacy not available")
+    
+    def test_with_multiple_chunks_mock(self):
+        """Test processing text that needs chunking with blank model."""
+        try:
+            import spacy
+            nlp = spacy.blank("en")
+            
+            # Create a large text that will be chunked
+            text = "\n\n".join(["Paragraph " * 100 for _ in range(20)])
+            
+            # This should work with the blank model
+            entities, html, num_chunks = process_text_in_chunks(nlp, text, max_chunk_size=1000)
+            
+            assert isinstance(entities, list)
+            assert num_chunks > 1
+            assert isinstance(html, str)
+            assert len(html) > 0
+            # Verify section breaks are present
+            assert "Document Section Break" in html
+        except ImportError:
+            pytest.skip("spacy not available")
+    
+    def test_output_file_generation(self):
+        """Test that output file is generated correctly."""
+        try:
+            import spacy
+            import tempfile
+            
+            nlp = spacy.blank("en")
+            text = "This is a test."
+            
+            with tempfile.TemporaryDirectory() as tmpdir:
+                output_path = Path(tmpdir) / "test_output.html"
+                
+                entities, html, num_chunks = process_text_in_chunks(
+                    nlp, text, output_path=output_path
+                )
+                
+                # Verify file was created
+                assert output_path.exists()
+                
+                # Verify file content
+                with open(output_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                    assert len(content) > 0
+                    assert content == html
+        except ImportError:
+            pytest.skip("spacy not available")
 
 
 class TestEdgeCases:
