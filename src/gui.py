@@ -385,9 +385,21 @@ class NERDemoGUI:
         
         if file_path:
             try:
+                # Check file size to prevent memory issues
+                file_size = Path(file_path).stat().st_size
+                MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB limit
+                if file_size > MAX_FILE_SIZE:
+                    messagebox.showwarning(
+                        "File Too Large",
+                        f"File size ({file_size / 1024 / 1024:.1f} MB) exceeds maximum allowed size (10 MB)."
+                    )
+                    self.status_var.set("File too large to load")
+                    return
+                
                 # Try to read the file with UTF-8 encoding first
+                text = None
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, 'r', encoding='utf-8', errors='strict') as f:
                         text = f.read()
                 except UnicodeDecodeError:
                     # Fallback to latin-1 encoding if UTF-8 fails (latin-1 accepts all bytes)
