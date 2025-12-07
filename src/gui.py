@@ -331,10 +331,7 @@ class NERDemoGUI:
             self.progress_var.set(0)
             self.root.update()
             
-            # Show progress during loading
-            self.progress_var.set(30)
-            self.root.update()
-            
+            # Load the model (heavy operation)
             self.nlp = spacy.load(model_path)
             self.model_name = model_name
             
