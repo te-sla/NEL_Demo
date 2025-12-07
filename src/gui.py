@@ -29,7 +29,7 @@ except ImportError:
 
 # Import text chunker module
 try:
-    from text_chunker import (
+    from .text_chunker import (
         process_text_in_chunks, 
         split_into_paragraphs, 
         DEFAULT_MAX_CHUNK_SIZE,
@@ -37,13 +37,23 @@ try:
         CYRTRANSLIT_AVAILABLE
     )
 except ImportError:
-    print("Warning: text_chunker module not found. Large text processing may fail.")
-    process_text_in_chunks = None
-    split_into_paragraphs = None
-    transliterate_to_latin = None
-    CYRTRANSLIT_AVAILABLE = False
-    # Fallback value matches the default in text_chunker.py
-    DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
+    # Fallback for when running as a script
+    try:
+        from text_chunker import (
+            process_text_in_chunks, 
+            split_into_paragraphs, 
+            DEFAULT_MAX_CHUNK_SIZE,
+            transliterate_to_latin,
+            CYRTRANSLIT_AVAILABLE
+        )
+    except ImportError:
+        print("Warning: text_chunker module not found. Large text processing may fail.")
+        process_text_in_chunks = None
+        split_into_paragraphs = None
+        transliterate_to_latin = None
+        CYRTRANSLIT_AVAILABLE = False
+        # Fallback value matches the default in text_chunker.py
+        DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
 
 # Attribution URLs
 TESLA_URL = "https://tesla.rgf.bg.ac.rs/"

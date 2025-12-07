@@ -23,6 +23,14 @@ import re
 import warnings
 from pathlib import Path
 
+# Try to import config module for constants
+try:
+    from .config import DEFAULT_MAX_CHUNK_SIZE, SUPPORTED_TRANSLITERATION_CODES
+except ImportError:
+    # Fallback defaults if config not available
+    DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
+    SUPPORTED_TRANSLITERATION_CODES = {'sr', 'me', 'mk', 'ru', 'uk', 'kk', 'bg'}
+
 # Try to import spacy's displacy for HTML rendering
 # This is optional and only needed for process_text_in_chunks function
 try:
@@ -39,13 +47,6 @@ try:
 except ImportError:
     CYRTRANSLIT_AVAILABLE = False
     cyrtranslit = None
-
-
-# Default maximum chunk size (conservative estimate for spaCy)
-DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
-
-# Supported language codes for Cyrillic transliteration
-SUPPORTED_TRANSLITERATION_CODES = {'sr', 'me', 'mk', 'ru', 'uk', 'kk', 'bg'}
 
 
 def transliterate_to_latin(text: str, lang_code: str = 'sr') -> str:

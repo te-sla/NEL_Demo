@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nel-demo"
+version = "1.0.0"
+description = "A simple demonstration application for Named Entity Recognition (NER) and Named Entity Linking (NEL) using spaCy models"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "TESLA - Text Embeddings - Serbian Language Applications"},
+    {name = "Language Resources and Technologies Society - Jerteh"}
+]
+keywords = ["nlp", "ner", "nel", "spacy", "named-entity-recognition", "gui", "serbian"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+]
+
+dependencies = [
+    "spacy>=3.7.0",
+    "cyrtranslit>=1.0.0",
+]
+
+[project.optional-dependencies]
+transformers = ["spacy-transformers"]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+]
+
+[project.urls]
+Homepage = "https://tesla.rgf.bg.ac.rs/"
+Repository = "https://github.com/te-sla/NEL_Demo"
+Documentation = "https://github.com/te-sla/NEL_Demo/blob/main/README.md"
+
+[project.scripts]
+nel-demo = "src.gui:main"
+
+[tool.setuptools]
+packages = ["src", "tests"]
+
+[tool.setuptools.package-data]
+src = ["*.py"]
+tests = ["*.py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*", "venv/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
