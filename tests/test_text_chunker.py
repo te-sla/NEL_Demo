@@ -277,6 +277,62 @@ class TestProcessTextInChunks:
         # The HTML outputs should be different due to transliteration
         # (one contains Cyrillic, one contains Latin)
         assert html_with != html_without
+    
+    def test_progress_callback_invoked(self):
+        """Test that progress_callback is called correctly for each chunk."""
+        try:
+            import spacy
+        except ImportError:
+            pytest.skip("spaCy not installed")
+        
+        # Create a blank model for testing
+        nlp = spacy.blank("en")
+        
+        # Create text that will be split into multiple chunks
+        text = "Test paragraph. " * 1000  # Create text large enough to be chunked
+        
+        # Track callback invocations
+        callback_calls = []
+        
+        def mock_callback(current, total):
+            callback_calls.append((current, total))
+        
+        # Process with callback
+        all_entities, html, num_chunks = process_text_in_chunks(
+            nlp,
+            text,
+            max_chunk_size=1000,  # Force multiple chunks
+            progress_callback=mock_callback
+        )
+        
+        # Verify callback was invoked
+        assert len(callback_calls) > 0, "Callback should be invoked at least once"
+        assert len(callback_calls) == num_chunks, "Callback should be invoked once per chunk"
+        
+        # Verify callback parameters are correct
+        for i, (current, total) in enumerate(callback_calls):
+            assert current == i, f"Current should be {i}, got {current}"
+            assert total == num_chunks, f"Total should be {num_chunks}, got {total}"
+    
+    def test_progress_callback_none_works(self):
+        """Test that None progress_callback works without errors."""
+        try:
+            import spacy
+        except ImportError:
+            pytest.skip("spaCy not installed")
+        
+        # Create a blank model for testing
+        nlp = spacy.blank("en")
+        
+        # Should work fine with no callback
+        all_entities, html, num_chunks = process_text_in_chunks(
+            nlp,
+            "Test text.",
+            progress_callback=None
+        )
+        
+        assert html is not None
+        assert num_chunks >= 1
 
 
 class TestEdgeCases:

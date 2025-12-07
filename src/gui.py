@@ -543,14 +543,6 @@ class NERDemoGUI:
                     self.status_var.set(f"Processing chunk {current+1} of {total}...")
                     self.root.update()
                 
-                # Process text in chunks using the shared function
-                all_entities, html, num_chunks = process_text_in_chunks(
-                    self.nlp, 
-                    text, 
-                    max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
-                    output_path=output_file,
-                    progress_callback=progress_callback
-                )
                 # Get transliteration setting
                 use_transliteration = self.transliterate_var.get()
                 
@@ -561,6 +553,7 @@ class NERDemoGUI:
                         text, 
                         max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
                         output_path=output_file,
+                        progress_callback=progress_callback,
                         transliterate=use_transliteration,
                         transliterate_lang=self.DEFAULT_TRANSLITERATION_LANG
                     )
@@ -578,6 +571,7 @@ class NERDemoGUI:
                         text, 
                         max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
                         output_path=output_file,
+                        progress_callback=progress_callback,
                         transliterate=False
                     )
                 

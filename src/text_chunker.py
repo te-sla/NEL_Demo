@@ -280,7 +280,7 @@ def process_text_in_chunks(
     text: str,
     max_chunk_size: int = DEFAULT_MAX_CHUNK_SIZE,
     output_path: Optional[Path] = None,
-    progress_callback: Optional[Callable[[int, int], None]] = None
+    progress_callback: Optional[Callable[[int, int], None]] = None,
     transliterate: bool = False,
     transliterate_lang: str = 'sr'
 ) -> Tuple[List, str, int]:
@@ -301,7 +301,7 @@ def process_text_in_chunks(
         max_chunk_size: Maximum chunk size in characters
         output_path: Optional path to save merged HTML output
         progress_callback: Optional callback function(current_chunk, total_chunks) 
-                          called after processing each chunk
+                          called before processing each chunk
         transliterate: If True, transliterate Cyrillic to Latin before processing
         transliterate_lang: Language code for transliteration (default: 'sr')
         
