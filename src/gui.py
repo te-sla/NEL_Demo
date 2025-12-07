@@ -32,8 +32,8 @@ try:
     from text_chunker import (
         process_text_in_chunks, 
         split_into_paragraphs, 
-        transliterate_to_latin,
         DEFAULT_MAX_CHUNK_SIZE,
+        transliterate_to_latin,
         CYRTRANSLIT_AVAILABLE
     )
 except ImportError:
@@ -309,6 +309,16 @@ class NERDemoGUI:
         )
         self.results_text.pack(fill=tk.BOTH, expand=True)
         
+        # Progress bar
+        self.progress_var = tk.DoubleVar()
+        self.progress_bar = ttk.Progressbar(
+            self.root,
+            variable=self.progress_var,
+            maximum=100,
+            mode='determinate'
+        )
+        self.progress_bar.pack(fill=tk.X, side=tk.BOTTOM, padx=10, pady=2)
+        
         # Status bar
         self.status_var = tk.StringVar(value="Ready")
         status_bar = ttk.Label(
@@ -372,16 +382,24 @@ class NERDemoGUI:
         
         try:
             self.status_var.set(f"Loading model: {model_name}...")
+            self.progress_var.set(0)
             self.root.update()
             
+            # Load the model (heavy operation)
             self.nlp = spacy.load(model_path)
             self.model_name = model_name
+            
+            self.progress_var.set(100)
+            self.root.update()
             
             self.model_status_label.config(
                 text=f"Model loaded: {model_name}",
                 foreground="green"
             )
             self.status_var.set(f"Model loaded successfully: {model_name}")
+            
+            # Reset progress bar after a short delay
+            self.root.after(500, lambda: self.progress_var.set(0))
             
             # Display model info
             self.results_text.delete(1.0, tk.END)
@@ -395,6 +413,7 @@ class NERDemoGUI:
                     self.results_text.insert(tk.END, f"  {key}: {value}\n")
             
         except Exception as e:
+            self.progress_var.set(0)
             messagebox.showerror(
                 "Error Loading Model",
                 f"Failed to load model:\n{str(e)}"
@@ -491,6 +510,7 @@ class NERDemoGUI:
         
         try:
             self.status_var.set("Processing text...")
+            self.progress_var.set(0)
             self.root.update()
             
             # Check if text has multiple paragraphs (chunking improves NER with paragraph context)
@@ -503,14 +523,25 @@ class NERDemoGUI:
             
             has_multiple_paragraphs = len(paragraphs) > 1
             
+            self.progress_var.set(10)
+            self.root.update()
+            
             if has_multiple_paragraphs and process_text_in_chunks is not None:
                 # Use chunking for multi-paragraph texts
                 self.status_var.set(f"Processing text ({text_length:,} chars, {len(paragraphs)} paragraphs) in chunks...")
+                self.progress_var.set(20)
                 self.root.update()
                 
                 # Save output file path
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 output_file = self.output_dir / f"ner_output_{timestamp}.html"
+                
+                # Define progress callback for chunked processing
+                def progress_callback(current, total):
+                    progress = 20 + (60 * (current + 1) / total)
+                    self.progress_var.set(progress)
+                    self.status_var.set(f"Processing chunk {current+1} of {total}...")
+                    self.root.update()
                 
                 # Get transliteration setting
                 use_transliteration = self.transliterate_var.get()
@@ -522,6 +553,7 @@ class NERDemoGUI:
                         text, 
                         max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
                         output_path=output_file,
+                        progress_callback=progress_callback,
                         transliterate=use_transliteration,
                         transliterate_lang=self.DEFAULT_TRANSLITERATION_LANG
                     )
@@ -539,8 +571,13 @@ class NERDemoGUI:
                         text, 
                         max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
                         output_path=output_file,
+                        progress_callback=progress_callback,
                         transliterate=False
                     )
+                
+                # Update progress after processing is complete
+                self.progress_var.set(95)
+                self.root.update()
                 
                 # Display entities in results
                 self.results_text.delete(1.0, tk.END)
@@ -572,7 +609,12 @@ class NERDemoGUI:
                 self.results_text.insert(tk.END, f"Text was split into {num_chunks} chunk(s) from {len(paragraphs)} paragraph(s) for better context.\n")
                 
                 self.last_output_file = output_file
+                self.progress_var.set(100)
                 self.status_var.set(f"Processing complete. Output saved to: {output_file.name}")
+                self.root.update()
+                
+                # Reset progress bar after a short delay
+                self.root.after(1000, lambda: self.progress_var.set(0))
                 
                 messagebox.showinfo(
                     "Processing Complete",
@@ -583,6 +625,10 @@ class NERDemoGUI:
                 )
             else:
                 # Process text normally (single paragraph or no chunking available)
+                self.progress_var.set(30)
+                self.status_var.set("Processing text...")
+                self.root.update()
+                
                 # Get transliteration setting and apply if enabled
                 use_transliteration = self.transliterate_var.get()
                 text_to_process = text
@@ -601,6 +647,9 @@ class NERDemoGUI:
                         text_to_process = text
                 
                 doc = self.nlp(text_to_process)
+                
+                self.progress_var.set(70)
+                self.root.update()
                 
                 # Display entities in results
                 self.results_text.delete(1.0, tk.END)
@@ -623,9 +672,16 @@ class NERDemoGUI:
                 self.results_text.insert(tk.END, f"\n\nTotal entities: {len(doc.ents)}\n")
                 
                 # Generate HTML visualization with displaCy
+                self.progress_var.set(85)
+                self.status_var.set("Generating visualization...")
+                self.root.update()
+                
                 html = displacy.render(doc, style="ent", page=True)
                 
                 # Save HTML to output directory
+                self.progress_var.set(95)
+                self.root.update()
+                
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 output_file = self.output_dir / f"ner_output_{timestamp}.html"
                 
@@ -633,7 +689,12 @@ class NERDemoGUI:
                     f.write(html)
                 
                 self.last_output_file = output_file
+                self.progress_var.set(100)
                 self.status_var.set(f"Processing complete. Output saved to: {output_file.name}")
+                self.root.update()
+                
+                # Reset progress bar after a short delay
+                self.root.after(1000, lambda: self.progress_var.set(0))
                 
                 messagebox.showinfo(
                     "Processing Complete",
@@ -643,6 +704,7 @@ class NERDemoGUI:
                 )
             
         except Exception as e:
+            self.progress_var.set(0)
             messagebox.showerror(
                 "Processing Error",
                 f"Error processing text:\n{str(e)}"

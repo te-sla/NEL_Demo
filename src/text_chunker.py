@@ -18,7 +18,7 @@ primarily written in Cyrillic script, which is useful when the NER model was
 trained on Latin script.
 """
 
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Callable
 import re
 import warnings
 from pathlib import Path
@@ -280,6 +280,7 @@ def process_text_in_chunks(
     text: str,
     max_chunk_size: int = DEFAULT_MAX_CHUNK_SIZE,
     output_path: Optional[Path] = None,
+    progress_callback: Optional[Callable[[int, int], None]] = None,
     transliterate: bool = False,
     transliterate_lang: str = 'sr'
 ) -> Tuple[List, str, int]:
@@ -299,6 +300,8 @@ def process_text_in_chunks(
         text: Input text to process
         max_chunk_size: Maximum chunk size in characters
         output_path: Optional path to save merged HTML output
+        progress_callback: Optional callback function(current_chunk, total_chunks) 
+                          called before processing each chunk
         transliterate: If True, transliterate Cyrillic to Latin before processing
         transliterate_lang: Language code for transliteration (default: 'sr')
         
@@ -332,7 +335,11 @@ def process_text_in_chunks(
     all_entities = []
     html_outputs = []
     
-    for chunk in chunks:
+    for i, chunk in enumerate(chunks):
+        # Call progress callback if provided
+        if progress_callback:
+            progress_callback(i, len(chunks))
+        
         # Process with spaCy
         doc = nlp(chunk)
         
