@@ -41,6 +41,9 @@ except ImportError:
 TESLA_URL = "https://tesla.rgf.bg.ac.rs/"
 JERTEH_URL = "https://jerteh.rs/"
 
+# File loading constants
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB limit for file loading
+
 
 class ToolTip:
     """Simple tooltip widget for tkinter labels."""
@@ -387,7 +390,6 @@ class NERDemoGUI:
             try:
                 # Check file size to prevent memory issues
                 file_size = Path(file_path).stat().st_size
-                MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB limit
                 if file_size > MAX_FILE_SIZE:
                     messagebox.showwarning(
                         "File Too Large",
@@ -397,7 +399,6 @@ class NERDemoGUI:
                     return
                 
                 # Try to read the file with UTF-8 encoding first
-                text = None
                 try:
                     with open(file_path, 'r', encoding='utf-8', errors='strict') as f:
                         text = f.read()
