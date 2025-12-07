@@ -33,6 +33,8 @@ NEL_Demo/
 ├── models/                 # Postavite vaše trenirane modele ovde
 │   └── {ime_modela}/
 │       └── model-best/     # Vaš trenirani spaCy model
+├── inputs/                 # Ulazni tekstualni fajlovi
+│   └── sample_text.txt     # Primer tekstualnog fajla
 ├── data/
 │   └── outputs/            # HTML vizuelizacije izlaza
 └── venv/                   # Virtuelno okruženje (kreirano od strane instalera)
@@ -129,6 +131,7 @@ python src/gui.py
 2. **Unesite tekst**:
    - Ukucajte ili nalepite tekst u polje za unos
    - Ili kliknite "Load Sample Text" za demo
+   - Ili kliknite "Load from File" da učitate tekstualni fajl iz `inputs/` fascikle
 
 3. **Obradite tekst**:
    - Kliknite "Process Text (NER)" da analizirate tekst
