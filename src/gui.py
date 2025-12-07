@@ -38,8 +38,6 @@ except ImportError:
     print("Warning: text_chunker module not found. Large text processing may fail.")
     process_text_in_chunks = None
     split_into_paragraphs = None
-    chunk_text = None
-    merge_html_outputs = None
     # Fallback value matches the default in text_chunker.py
     DEFAULT_MAX_CHUNK_SIZE = 100000  # 100K characters per chunk
 
@@ -433,44 +431,29 @@ class NERDemoGUI:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 output_file = self.output_dir / f"ner_output_{timestamp}.html"
                 
-                # Chunk the text
-                chunks = chunk_text(text, DEFAULT_MAX_CHUNK_SIZE)
-                num_chunks = len(chunks)
-                
-                # Process each chunk with progress updates
-                all_entities = []
-                html_outputs = []
-                
-                for i, chunk in enumerate(chunks):
-                    # Update progress (20% to 80% for processing)
-                    progress = 20 + (60 * (i + 1) / num_chunks)
+                # Define progress callback for chunked processing
+                def progress_callback(current, total):
+                    progress = 20 + (60 * (current + 1) / total)
                     self.progress_var.set(progress)
-                    self.status_var.set(f"Processing chunk {i+1} of {num_chunks}...")
+                    self.status_var.set(f"Processing chunk {current+1} of {total}...")
                     self.root.update()
-                    
-                    # Process with spaCy
-                    doc = self.nlp(chunk)
-                    
-                    # Collect entities
-                    all_entities.extend(doc.ents)
-                    
-                    # Generate HTML for this chunk
-                    html = displacy.render(doc, style="ent", page=True)
-                    html_outputs.append(html)
                 
-                # Merge HTML outputs
+                # Process text in chunks using the shared function
                 self.progress_var.set(85)
                 self.status_var.set("Merging results...")
                 self.root.update()
                 
-                html = merge_html_outputs(html_outputs, title="Chunked NER Output")
+                all_entities, html, num_chunks = process_text_in_chunks(
+                    self.nlp, 
+                    text, 
+                    max_chunk_size=DEFAULT_MAX_CHUNK_SIZE,
+                    output_path=output_file,
+                    progress_callback=progress_callback
+                )
                 
-                # Save HTML
+                # Save HTML (already saved by process_text_in_chunks)
                 self.progress_var.set(95)
                 self.root.update()
-                
-                with open(output_file, "w", encoding="utf-8") as f:
-                    f.write(html)
                 
                 # Display entities in results
                 self.results_text.delete(1.0, tk.END)

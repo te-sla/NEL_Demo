@@ -223,7 +223,8 @@ def process_text_in_chunks(
     nlp,
     text: str,
     max_chunk_size: int = DEFAULT_MAX_CHUNK_SIZE,
-    output_path: Optional[Path] = None
+    output_path: Optional[Path] = None,
+    progress_callback = None
 ) -> Tuple[List, str, int]:
     """
     Process text in chunks using spaCy NLP pipeline and merge results.
@@ -240,6 +241,8 @@ def process_text_in_chunks(
         text: Input text to process
         max_chunk_size: Maximum chunk size in characters
         output_path: Optional path to save merged HTML output
+        progress_callback: Optional callback function(current_chunk, total_chunks) 
+                          called after processing each chunk
         
     Returns:
         Tuple of (all_entities, merged_html, num_chunks)
@@ -266,7 +269,11 @@ def process_text_in_chunks(
     all_entities = []
     html_outputs = []
     
-    for chunk in chunks:
+    for i, chunk in enumerate(chunks):
+        # Call progress callback if provided
+        if progress_callback:
+            progress_callback(i, len(chunks))
+        
         # Process with spaCy
         doc = nlp(chunk)
         
