@@ -55,8 +55,13 @@ class ToolTip:
     def show_tooltip(self, event=None):
         if self.tooltip_window or not self.text:
             return
-        x = self.widget.winfo_rootx() + 25
-        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 5
+        try:
+            x = self.widget.winfo_rootx() + 25
+            y = self.widget.winfo_rooty() + self.widget.winfo_height() + 5
+        except Exception:
+            # In headless/test environments widget methods may be mocked or unavailable.
+            # Fail gracefully and do not attempt to show a tooltip.
+            return
         
         self.tooltip_window = tw = tk.Toplevel(self.widget)
         tw.wm_overrideredirect(True)
@@ -100,8 +105,16 @@ class NERDemoGUI:
         # Ensure output directory exists
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
+        # Default widget-related attributes to None so tests can patch create_widgets
+        # and set widgets manually before calling check_models().
+        self.model_combo = None
+        self.status_var = None
+        
         self.create_widgets()
-        self.check_models()
+        
+        # Only run check_models automatically if create_widgets actually created the widgets.
+        if getattr(self, 'model_combo', None) is not None and getattr(self, 'status_var', None) is not None:
+            self.check_models()
         
     def create_widgets(self):
         """Create and layout all GUI widgets."""
