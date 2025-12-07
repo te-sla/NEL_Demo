@@ -1,5 +1,7 @@
 # NEL Demo - spaCy NER+NEL GUI
 
+**[🇬🇧 Engleska verzija / English version](README.md)**
+
 Jednostavna demonstraciona aplikacija za Prepoznavanje Imenovanih Entiteta (NER) i Povezivanje Imenovanih Entiteta (NEL) korišćenjem spaCy modela sa minimalnim GUI interfejsom.
 
 ## Karakteristike
@@ -159,19 +161,19 @@ Aplikacija uključuje automatsku transliteraciju ćirilice u latinicu za pobolj�
 
 **Primer**: Ćirilični tekst "Новак Ђоковић рођен у Београду" se automatski transliteriše u "Novak Đoković rođen u Beogradu" pre slanja u NER pipeline.
 
-**Napomena**: Ako imate model specifično treniran na ćiriličnom tekstu, možete onemogućiti ovu opciju tako što ćete odznačiti opciju "Transliterate Cyrillic to Latin before processing".
+**Napomena**: Ako imate model specifično treniran na ćiriličnom tekstu, možete onemogućiti ovu opciju tako što ćete odznačiti polje "Transliteriši ćirilicu u latinicu pre obrade".
 
 ### Primer
 
 Probajte ovaj primer teksta:
 ```
-Apple Inc. je američka multinacionalna tehnološka kompanija sa sedištem 
-u Cupertino, Kalifornija. Tim Cook je CEO Apple-a. Kompaniju su osnovali 
-Steve Jobs, Steve Wozniak i Ronald Wayne 1976. godine.
+Народна банка Србије је централна банка Републике Србије са седиштем у Београду. 
+Гувернер Народне банке Србије је Jorgovanka Tabaković која се налази на тој позицији од 2012. године. 
+Новак Ђоковић је српски тенисер рођен у Београду 1987. године.
 ```
 
 Aplikacija će:
-- Ekstraktovati entitete kao što su "Apple Inc." (ORG), "Tim Cook" (PERSON), "Cupertino" (GPE)
+- Ekstraktovati entitete kao što su "Народна банка Србије" (ORG), "Jorgovanka Tabaković" (PERSON), "Београд" (GPE)
 - Prikazati oznake entiteta i pozicije
 - Generisati HTML vizuelizaciju sa istaknutim entitetima
 - Sačuvati izlaz u `data/outputs/ner_output_YYYYMMDD_HHMMSS.html`

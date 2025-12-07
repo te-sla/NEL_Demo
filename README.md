@@ -166,13 +166,13 @@ The application includes automatic Cyrillic-to-Latin transliteration to improve 
 
 Try this sample text:
 ```
-Народна банка Србије је централна банка Републике Србије са седиштем у Београду. 
-Гувернер Народне банке Србије је Јорgovanka Табаковић која се налази на тој позицији од 2012. године. 
-Новак Ђоковић је српски тенисер рођен у Београду 1987. године.
+Apple Inc. is an American multinational technology company headquartered 
+in Cupertino, California. Tim Cook is the CEO of Apple. The company was 
+founded by Steve Jobs, Steve Wozniak, and Ronald Wayne in 1976.
 ```
 
 The application will:
-- Extract entities like "Народна банка Србије" (ORG), "Јорgovanka Табаковић" (PERSON), "Београд" (GPE)
+- Extract entities like "Apple Inc." (ORG), "Tim Cook" (PERSON), "Cupertino" (GPE)
 - Show entity labels and positions
 - Generate an HTML visualization with highlighted entities
 - Save the output to `data/outputs/ner_output_YYYYMMDD_HHMMSS.html`
