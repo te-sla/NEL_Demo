@@ -61,6 +61,11 @@ NEL_Demo/
 .\install.ps1
 ```
 
+Ako ne radi zbog digitalnog potpisa
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+
 ### Linux/Mac (Bash)
 
 1. Otvorite terminal
