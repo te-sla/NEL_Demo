@@ -80,6 +80,12 @@ try {
     }
     
     $versionParts = $versionOutput.Split('.')
+    
+    # Validate that we have at least 2 parts (major.minor)
+    if ($versionParts.Length -lt 2) {
+        throw "Invalid Python version format: $versionOutput"
+    }
+    
     $major = [int]$versionParts[0]
     $minor = [int]$versionParts[1]
 } catch {
