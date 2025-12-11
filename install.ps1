@@ -1,3 +1,32 @@
+# ============================================================================
+# Execution Policy Bootstrap
+# ============================================================================
+# WHY THIS EXISTS:
+# • GitHub scripts are not digitally signed
+# • Default Windows PowerShell blocks unsigned scripts
+# • This bootstrap safely applies a temporary execution policy
+# • It affects ONLY this script, not the user's system settings
+# ============================================================================
+
+# Check current execution policy and ensure script can run
+$currentPolicy = Get-ExecutionPolicy -Scope Process
+if ($currentPolicy -ne 'Bypass' -and $currentPolicy -ne 'Unrestricted') {
+    try {
+        # Attempt to bypass execution policy for this process only
+        Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+    }
+    catch [System.Security.SecurityException] {
+        # If we don't have permission, relaunch with elevation
+        Write-Host "Relaunching script with elevated permissions..." -ForegroundColor Yellow
+        $arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
+        Start-Process powershell -ArgumentList $arguments -Verb RunAs
+        exit
+    }
+}
+
+Write-Host "Execution policy applied. Continuing installation..." -ForegroundColor Cyan
+Write-Host ""
+
 # NEL Demo Installer for Windows
 # This script checks Python version, creates a virtual environment, and installs dependencies
 
