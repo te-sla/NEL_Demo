@@ -74,8 +74,8 @@ try {
 try {
     $versionOutput = python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>&1
     
-    # Check if $versionOutput is null or empty
-    if ([string]::IsNullOrWhiteSpace($versionOutput) -or $versionOutput -match "error|not found") {
+    # Check if $versionOutput is null, empty, or contains error messages
+    if ([string]::IsNullOrWhiteSpace($versionOutput) -or $versionOutput -match "^\s*(error|exception|traceback|'python' is not recognized)") {
         throw "Python version command failed"
     }
     
