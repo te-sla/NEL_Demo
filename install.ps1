@@ -71,10 +71,44 @@ try {
 }
 
 # Check Python version (must be >= 3.10, recommend <= 3.11)
-$versionOutput = python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"
-$versionParts = $versionOutput.Split('.')
-$major = [int]$versionParts[0]
-$minor = [int]$versionParts[1]
+try {
+    $versionOutput = python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>&1
+    
+    # Check if $versionOutput is null or empty
+    if ([string]::IsNullOrWhiteSpace($versionOutput) -or $versionOutput -match "error|not found") {
+        throw "Python version command failed"
+    }
+    
+    $versionParts = $versionOutput.Split('.')
+    $major = [int]$versionParts[0]
+    $minor = [int]$versionParts[1]
+} catch {
+    Write-Host "Error: Unable to determine Python version" -ForegroundColor Red
+    Write-Host "Python may not be properly installed or configured." -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Python 3.10 or 3.11 is required for this application." -ForegroundColor Yellow
+    Write-Host "Python 3.12+ may have compatibility issues with spacy-transformers." -ForegroundColor Yellow
+    Write-Host ""
+    
+    # Offer automatic installation
+    $autoInstall = Read-Host "Would you like to automatically install Python 3.11? (y/N)"
+    
+    if ($autoInstall -eq "y" -or $autoInstall -eq "Y") {
+        $installed = Install-PythonWithWinget -version "3.11"
+        if (-not $installed) {
+            Write-Host "`nAutomatic installation failed." -ForegroundColor Red
+        }
+    }
+    
+    # Show manual installation instructions
+    Write-Host "`nTo install Python manually:" -ForegroundColor Yellow
+    Write-Host "1. Visit: https://www.python.org/downloads/windows/" -ForegroundColor Cyan
+    Write-Host "2. Download Python 3.11 (recommended)" -ForegroundColor Cyan
+    Write-Host "3. Run the installer and make sure to check 'Add Python to PATH'" -ForegroundColor Cyan
+    Write-Host "4. After installation, close this terminal and run this script again" -ForegroundColor Cyan
+    
+    exit 1
+}
 
 if ($major -lt 3 -or ($major -eq 3 -and $minor -lt 10)) {
     Write-Host "Error: Python 3.10 or higher is required. Found Python $versionOutput" -ForegroundColor Red
