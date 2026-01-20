@@ -84,10 +84,10 @@ Section "NEL Demo (required)" SecMain
     ; Copy all files from dist/NEL_Demo
     File /r "${DIST_DIR}\${APP_FOLDER}\*.*"
     
-    ; Copy README and LICENSE
+    ; Copy README, LICENSE, and CHANGELOG if they exist
     File "${PROJECT_ROOT}\README.md"
     File "${PROJECT_ROOT}\LICENSE"
-    File "${PROJECT_ROOT}\CHANGELOG.md"
+    File /nonfatal "${PROJECT_ROOT}\CHANGELOG.md"
     
     ; Store installation folder
     WriteRegStr HKLM "Software\${APP_NAME}" "Install_Dir" "$INSTDIR"
@@ -133,8 +133,14 @@ SectionEnd
 
 ; Uninstaller section
 Section "Uninstall"
-    ; Remove files
-    RMDir /r "$INSTDIR\${APP_FOLDER}"
+    ; Remove files (files are in INSTDIR root, not in subdirectory)
+    RMDir /r "$INSTDIR\_internal"
+    Delete "$INSTDIR\NEL_Demo.exe"
+    Delete "$INSTDIR\*.dll"
+    Delete "$INSTDIR\*.pyd"
+    RMDir /r "$INSTDIR\models"
+    RMDir /r "$INSTDIR\inputs"
+    RMDir /r "$INSTDIR\data"
     Delete "$INSTDIR\README.md"
     Delete "$INSTDIR\LICENSE"
     Delete "$INSTDIR\CHANGELOG.md"

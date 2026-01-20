@@ -52,7 +52,11 @@ mypy
 
 # Other unused modules
 sqlalchemy
-requests
-urllib3
-certifi
-chardet
+
+# Network modules - Commented out as they may be required by spaCy
+# for downloading models or making HTTP requests. Only exclude if you're
+# certain they're not needed for your use case.
+# requests
+# urllib3
+# certifi
+# chardet

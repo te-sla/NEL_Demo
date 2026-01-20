@@ -42,6 +42,14 @@ if [ ! -d "$APP_BUNDLE" ]; then
         # Copy executable and resources
         cp -r "$DIST_DIR/NEL_Demo/"* "$APP_BUNDLE/Contents/MacOS/"
         
+        # Determine if icon is available
+        ICON_KEY=""
+        if [ -f "$PROJECT_ROOT/icon.icns" ]; then
+            cp "$PROJECT_ROOT/icon.icns" "$APP_BUNDLE/Contents/Resources/"
+            ICON_KEY="    <key>CFBundleIconFile</key>
+    <string>icon.icns</string>"
+        fi
+        
         # Create Info.plist
         cat > "$APP_BUNDLE/Contents/Info.plist" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -68,16 +76,10 @@ if [ ! -d "$APP_BUNDLE" ]; then
     <true/>
     <key>LSMinimumSystemVersion</key>
     <string>10.13</string>
+$ICON_KEY
 </dict>
 </plist>
 EOF
-        
-        # Copy icon if available
-        if [ -f "$PROJECT_ROOT/icon.icns" ]; then
-            cp "$PROJECT_ROOT/icon.icns" "$APP_BUNDLE/Contents/Resources/"
-            echo "    <key>CFBundleIconFile</key>" >> "$APP_BUNDLE/Contents/Info.plist.tmp"
-            echo "    <string>icon.icns</string>" >> "$APP_BUNDLE/Contents/Info.plist.tmp"
-        fi
         
         echo -e "${CYAN}Created: $APP_BUNDLE${NC}"
     else
@@ -124,10 +126,18 @@ rm -f "$DMG_OUTPUT"
 echo -e "${GREEN}Creating DMG image...${NC}"
 echo ""
 
+# Determine volume icon option (if icon file exists)
+ICON_ARGS=()
+if [ -f "$PROJECT_ROOT/icon.icns" ]; then
+    ICON_ARGS=(--volicon "$PROJECT_ROOT/icon.icns")
+else
+    echo -e "${YELLOW}Warning: Volume icon not found at $PROJECT_ROOT/icon.icns, continuing without custom DMG icon.${NC}"
+fi
+
 # Create DMG with create-dmg
 create-dmg \
     --volname "NEL Demo" \
-    --volicon "$PROJECT_ROOT/icon.icns" \
+    "${ICON_ARGS[@]}" \
     --window-pos 200 120 \
     --window-size 600 400 \
     --icon-size 100 \

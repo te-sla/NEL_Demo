@@ -4,7 +4,7 @@ PyInstaller runtime hook for spaCy optimization.
 This hook optimizes spaCy loading in the bundled executable.
 """
 
-from PyInstaller.utils.hooks import collect_all, collect_data_files
+from PyInstaller.utils.hooks import collect_all
 
 # Collect all spaCy data
 datas, binaries, hiddenimports = collect_all('spacy')

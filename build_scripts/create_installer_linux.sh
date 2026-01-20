@@ -153,6 +153,8 @@ fi
 if [ -z "$APPIMAGETOOL" ]; then
     echo -e "${YELLOW}appimagetool not found. Downloading...${NC}"
     
+    # Note: Using 'continuous' release. For production, consider pinning to a
+    # specific release version and verifying checksums for better security.
     APPIMAGETOOL="$BUILD_DIR/appimagetool-x86_64.AppImage"
     curl -L "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" \
         -o "$APPIMAGETOOL"

@@ -37,15 +37,39 @@ if (Test-Path $VENV_ACTIVATE) {
     Write-Host ""
 }
 
+# Detect Python command
+Write-Host "Detecting Python command..." -ForegroundColor Green
+$pythonCandidates = @("py", "python", "python3")
+$PYTHON_CMD = $null
+
+foreach ($cmd in $pythonCandidates) {
+    try {
+        $null = & $cmd --version 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $PYTHON_CMD = $cmd
+            break
+        }
+    } catch {
+        # Ignore and try next candidate
+        continue
+    }
+}
+
+if (-not $PYTHON_CMD) {
+    Write-Host "Error: No suitable Python interpreter found." -ForegroundColor Red
+    Write-Host "Please install Python 3.10+ and ensure it is on your PATH." -ForegroundColor Red
+    exit 1
+}
+
 # Check Python version
-Write-Host "Checking Python version..." -ForegroundColor Green
-$PYTHON_VERSION = python --version 2>&1
+Write-Host "Checking Python version using: $PYTHON_CMD" -ForegroundColor Green
+$PYTHON_VERSION = & $PYTHON_CMD --version 2>&1
 Write-Host "Found: $PYTHON_VERSION" -ForegroundColor Cyan
 
 # Install/upgrade PyInstaller
 Write-Host ""
 Write-Host "Installing/upgrading PyInstaller..." -ForegroundColor Green
-python -m pip install --upgrade pyinstaller
+& $PYTHON_CMD -m pip install --upgrade pyinstaller
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Error: Failed to install PyInstaller" -ForegroundColor Red
     exit 1
@@ -120,7 +144,7 @@ if (Test-Path $ICON_FILE) {
 
 # Run PyInstaller
 $PYINSTALLER_ARGS += Join-Path $PROJECT_ROOT "src\gui.py"
-& python -m PyInstaller @PYINSTALLER_ARGS
+& $PYTHON_CMD -m PyInstaller @PYINSTALLER_ARGS
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
