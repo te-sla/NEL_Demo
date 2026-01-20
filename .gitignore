@@ -211,3 +211,17 @@ data/outputs/
 models/*/
 temp_test_output.html
 test_env/
+
+# Build artifacts
+build/
+dist/
+*.spec
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+installer.nsi
+
+# Temporary build files
+build_scripts/__pycache__/
+*.pyc

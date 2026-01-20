@@ -7,6 +7,7 @@ A simple demonstration application for Named Entity Recognition (NER) and Named 
 ## Features
 
 - ✅ **Easy Installation**: Automated installers for Windows (PowerShell) and Linux/Mac (Bash)
+- ✅ **Standalone Executables**: Pre-built executables for Windows, macOS, and Linux - **no Python required!**
 - ✅ **Python Version Check**: Ensures Python 3.10 or higher is installed
 - ✅ **Virtual Environment**: Automatically creates and manages a virtual environment
 - ✅ **Flexible Dependencies**: Choose between standard spaCy or spacy-transformers
@@ -18,6 +19,70 @@ A simple demonstration application for Named Entity Recognition (NER) and Named 
 - ✅ **Visual Output**: Generate beautiful HTML visualizations using displaCy
 - ✅ **Output Management**: Save all outputs to `data/outputs/` with timestamps
 - ✅ **Comprehensive Testing**: Full test suite with pytest
+- ✅ **Automated Builds**: GitHub Actions workflow for building releases on all platforms
+
+## 📦 Downloading Pre-built Executables
+
+**The easiest way to use NEL Demo is to download a pre-built executable - no Python installation required!**
+
+### Download Links
+
+Visit the [Releases page](https://github.com/te-sla/NEL_Demo/releases) to download the latest version for your platform:
+
+#### Windows
+- **Installer** (recommended): `NEL_Demo_Setup_v1.0.0.exe`
+  - Professional installer with Start Menu shortcuts
+  - Easy uninstallation through Control Panel
+- **Portable**: `NEL_Demo_Windows_v1.0.0.zip`
+  - No installation needed, run directly
+  - Can be used from USB drive
+
+#### macOS
+- **DMG** (recommended): `NEL_Demo_v1.0.0.dmg`
+  - Drag and drop to Applications folder
+  - Native macOS experience
+- **ZIP**: `NEL_Demo_macOS_v1.0.0.zip`
+  - Alternative compressed format
+
+#### Linux
+- **AppImage** (recommended): `NEL_Demo-v1.0.0-x86_64.AppImage`
+  - Universal Linux package
+  - Works on most distributions
+  - No installation required
+- **Tarball**: `NEL_Demo_Linux_v1.0.0.tar.gz`
+  - Manual installation option
+
+### Quick Start
+
+#### Windows
+1. Download the installer
+2. Run `NEL_Demo_Setup_v1.0.0.exe`
+3. Follow installation wizard
+4. Launch from Start Menu
+
+#### macOS
+1. Download the DMG file
+2. Open it and drag NEL Demo to Applications
+3. Right-click and select "Open" (first time only)
+
+#### Linux
+1. Download the AppImage
+2. Make executable: `chmod +x NEL_Demo-v1.0.0-x86_64.AppImage`
+3. Run: `./NEL_Demo-v1.0.0-x86_64.AppImage`
+
+### Security Note
+
+Verify file integrity using SHA256 checksums provided in `SHA256SUMS.txt`:
+
+```bash
+# Linux/macOS
+sha256sum -c SHA256SUMS.txt
+
+# Windows PowerShell
+Get-FileHash <filename> -Algorithm SHA256
+```
+
+For detailed installation instructions, see [docs/DISTRIBUTING.md](docs/DISTRIBUTING.md).
 
 ## Project Structure
 
@@ -44,13 +109,34 @@ NEL_Demo/
 
 ## Requirements
 
-- **Python**: 3.10 or higher
+### For Pre-built Executables (Recommended)
+
+**No requirements!** Just download and run. Python is NOT needed.
+
+- **Operating System**: Windows 10+, macOS 10.13+, or modern Linux
+- **RAM**: 4 GB minimum, 8 GB recommended
+- **Disk Space**: 500 MB free space
+
+### For Development (Building from Source)
+
+- **Python**: 3.10 or 3.11 (as specified in pyproject.toml)
 - **Operating System**: Windows, Linux, or macOS
 - **spaCy Model**: A trained spaCy model placed in `models/{model_name}/model-best/`
+- **Additional tools**: For building executables, see [docs/BUILDING.md](docs/BUILDING.md)
 
 ## Installation
 
-### Windows (PowerShell)
+### Option 1: Pre-built Executables (Easiest)
+
+Download from the [Releases page](https://github.com/te-sla/NEL_Demo/releases) and follow the quick start instructions above.
+
+See [docs/DISTRIBUTING.md](docs/DISTRIBUTING.md) for detailed instructions.
+
+### Option 2: Development Installation
+
+For developers or users who want to run from source:
+
+#### Windows (PowerShell)
 
 1. Open PowerShell
 2. Navigate to the project directory
@@ -291,6 +377,129 @@ The test suite includes:
 - **HTML merging tests**: Validate correct merging of multiple HTML outputs
 - **Edge case tests**: Test Unicode, special characters, very long sentences
 - **Integration tests**: End-to-end workflow validation
+
+## 🔨 Building Standalone Executables
+
+Want to build your own standalone executables? The project includes comprehensive build scripts for all platforms.
+
+### Prerequisites
+
+- Python 3.10 or 3.11
+- PyInstaller (installed automatically by build scripts)
+- Platform-specific tools (optional, for creating installers)
+
+### Quick Build
+
+#### Windows
+```powershell
+.\build_scripts\build_executable.ps1 -Clean
+```
+
+#### Linux/macOS
+```bash
+./build_scripts/build_executable.sh --clean
+```
+
+### Creating Installers
+
+#### Windows (NSIS)
+```powershell
+.\build_scripts\create_installer_windows.ps1 -Version "1.0.0"
+```
+
+#### macOS (DMG)
+```bash
+./build_scripts/create_installer_macos.sh "1.0.0"
+```
+
+#### Linux (AppImage)
+```bash
+./build_scripts/create_installer_linux.sh "1.0.0"
+```
+
+### Build Output
+
+- **Executables**: `dist/NEL_Demo/`
+- **Installers**: `dist/`
+- **Expected size**: 200-500 MB depending on platform and optimization
+
+### Detailed Documentation
+
+For comprehensive building instructions, see [docs/BUILDING.md](docs/BUILDING.md), which covers:
+
+- Local building on all platforms
+- Creating professional installers
+- Size optimization techniques
+- Troubleshooting build issues
+- Automated builds with GitHub Actions
+- Code signing (optional)
+
+## 🚀 Creating Releases
+
+For maintainers who want to create official releases with automated builds:
+
+### Automatic Build on Tag Push
+
+The easiest way to trigger a release build:
+
+```bash
+# Create and push a version tag
+git tag -a v1.0.0 -m "Release version 1.0.0"
+git push origin v1.0.0
+```
+
+This automatically:
+1. Builds executables for Windows, macOS, and Linux
+2. Creates installers for all platforms
+3. Generates SHA256 checksums
+4. Creates a GitHub Release with all artifacts
+5. Publishes release notes
+
+### Manual Workflow Dispatch
+
+Alternatively, trigger builds manually:
+
+1. Go to GitHub repository → Actions tab
+2. Select "Build Releases" workflow
+3. Click "Run workflow"
+4. Enter version number (e.g., "1.0.0")
+5. Click "Run workflow"
+
+### What Gets Built
+
+Each release includes:
+
+- **Windows**: 
+  - `NEL_Demo_Setup_v1.0.0.exe` (installer)
+  - `NEL_Demo_Windows_v1.0.0.zip` (portable)
+- **macOS**: 
+  - `NEL_Demo_v1.0.0.dmg` (disk image)
+  - `NEL_Demo_macOS_v1.0.0.zip` (app bundle)
+- **Linux**: 
+  - `NEL_Demo-v1.0.0-x86_64.AppImage` (universal)
+  - `NEL_Demo_Linux_v1.0.0.tar.gz` (tarball)
+- **Security**: `SHA256SUMS.txt` (checksums for verification)
+
+### Release Workflow
+
+The automated workflow (`.github/workflows/build-releases.yml`):
+
+1. **Build Jobs** (parallel):
+   - Sets up Python 3.11
+   - Installs dependencies
+   - Builds executable with PyInstaller
+   - Creates platform-specific installer
+   - Generates checksums
+   - Uploads artifacts
+
+2. **Release Job**:
+   - Downloads all artifacts
+   - Combines checksums
+   - Generates release notes
+   - Creates GitHub Release
+   - Uploads all files
+
+See [docs/BUILDING.md](docs/BUILDING.md) for more details on the automated build process.
 
 ## License
 

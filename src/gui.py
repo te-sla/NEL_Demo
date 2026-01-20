@@ -67,6 +67,17 @@ except ImportError:
         JERTEH_URL = "https://jerteh.rs/"
         MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB limit for file loading
 
+# Import version information
+try:
+    from .version import __version__, __build_date__, __build_type__
+except ImportError:
+    try:
+        from version import __version__, __build_date__, __build_type__
+    except ImportError:
+        __version__ = "1.0.0"
+        __build_date__ = "unknown"
+        __build_type__ = "source"
+
 
 class ToolTip:
     """Simple tooltip widget for tkinter labels."""
@@ -154,6 +165,15 @@ class NERDemoGUI:
         
     def create_widgets(self):
         """Create and layout all GUI widgets."""
+        # Create menu bar
+        menubar = tk.Menu(self.root)
+        self.root.config(menu=menubar)
+        
+        # Help menu
+        help_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label="About NEL Demo", command=self.show_about)
+        
         # Title
         title_label = tk.Label(
             self.root,
@@ -785,6 +805,28 @@ class NERDemoGUI:
                 "Error",
                 f"Could not open output folder:\n{str(e)}"
             )
+    
+    def show_about(self):
+        """Show About dialog with version and build information."""
+        about_text = f"""NEL Demo - spaCy NER+NEL GUI
+
+Version: {__version__}
+Build Date: {__build_date__}
+Build Type: {__build_type__}
+
+A demonstration application for Named Entity Recognition (NER) 
+and Named Entity Linking (NEL) using spaCy models.
+
+Made by:
+• TESLA - Text Embeddings - Serbian Language Applications
+  {TESLA_URL}
+• Language Resources and Technologies Society - Jerteh
+  {JERTEH_URL}
+
+License: CC0 1.0 Universal (Public Domain)
+Repository: https://github.com/te-sla/NEL_Demo
+"""
+        messagebox.showinfo("About NEL Demo", about_text)
 
 
 def main():
