@@ -1,0 +1,336 @@
+name: Build Releases
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  build-windows:
+    name: Build Windows Executable
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+      
+      - name: Build executable
+        run: |
+          powershell -ExecutionPolicy Bypass -File .\build_scripts\build_executable.ps1 -Clean
+      
+      - name: Install NSIS
+        run: |
+          choco install nsis -y
+      
+      - name: Create installer
+        run: |
+          $version = if ($env:GITHUB_REF -like 'refs/tags/*') { $env:GITHUB_REF -replace 'refs/tags/v', '' } else { '${{ github.event.inputs.version }}' }
+          powershell -ExecutionPolicy Bypass -File .\build_scripts\create_installer_windows.ps1 -Version $version
+      
+      - name: Create ZIP archive
+        run: |
+          $version = if ($env:GITHUB_REF -like 'refs/tags/*') { $env:GITHUB_REF -replace 'refs/tags/v', '' } else { '${{ github.event.inputs.version }}' }
+          Compress-Archive -Path dist\NEL_Demo -DestinationPath "dist\NEL_Demo_Windows_v$version.zip"
+      
+      - name: Generate checksums
+        run: |
+          cd dist
+          Get-ChildItem -Filter "NEL_Demo*.exe","NEL_Demo*.zip" | ForEach-Object {
+            $hash = (Get-FileHash $_.Name -Algorithm SHA256).Hash
+            "$hash  $($_.Name)" | Out-File -Append -FilePath checksums-windows.txt -Encoding utf8
+          }
+      
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: |
+            dist/NEL_Demo_Setup*.exe
+            dist/NEL_Demo_Windows*.zip
+            dist/checksums-windows.txt
+          retention-days: 7
+
+  build-macos:
+    name: Build macOS Executable
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+      
+      - name: Build executable
+        run: |
+          chmod +x ./build_scripts/build_executable.sh
+          ./build_scripts/build_executable.sh --clean
+      
+      - name: Install create-dmg
+        run: |
+          brew install create-dmg
+      
+      - name: Create DMG
+        run: |
+          chmod +x ./build_scripts/create_installer_macos.sh
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            version="${GITHUB_REF#refs/tags/v}"
+          else
+            version="${{ github.event.inputs.version }}"
+          fi
+          ./build_scripts/create_installer_macos.sh "$version"
+      
+      - name: Create ZIP archive
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            version="${GITHUB_REF#refs/tags/v}"
+          else
+            version="${{ github.event.inputs.version }}"
+          fi
+          cd dist
+          zip -r "NEL_Demo_macOS_v$version.zip" NEL_Demo.app
+      
+      - name: Generate checksums
+        run: |
+          cd dist
+          shasum -a 256 NEL_Demo*.dmg NEL_Demo*.zip > checksums-macos.txt
+      
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build
+          path: |
+            dist/NEL_Demo*.dmg
+            dist/NEL_Demo_macOS*.zip
+            dist/checksums-macos.txt
+          retention-days: 7
+
+  build-linux:
+    name: Build Linux Executable
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+      
+      - name: Build executable
+        run: |
+          chmod +x ./build_scripts/build_executable.sh
+          ./build_scripts/build_executable.sh --clean
+      
+      - name: Create AppImage
+        run: |
+          chmod +x ./build_scripts/create_installer_linux.sh
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            version="${GITHUB_REF#refs/tags/v}"
+          else
+            version="${{ github.event.inputs.version }}"
+          fi
+          ./build_scripts/create_installer_linux.sh "$version"
+      
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum NEL_Demo*.AppImage NEL_Demo*.tar.gz > checksums-linux.txt
+      
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: |
+            dist/NEL_Demo*.AppImage
+            dist/NEL_Demo*.tar.gz
+            dist/checksums-linux.txt
+          retention-days: 7
+
+  create-release:
+    name: Create Release
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      
+      - name: Prepare release assets
+        run: |
+          mkdir -p release
+          cp artifacts/windows-build/* release/ || true
+          cp artifacts/macos-build/* release/ || true
+          cp artifacts/linux-build/* release/ || true
+          
+          # Combine checksums
+          cat release/checksums-*.txt > release/SHA256SUMS.txt
+          rm release/checksums-*.txt
+      
+      - name: Get version
+        id: get_version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            echo "tag=v${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Generate release notes
+        run: |
+          cat > release/RELEASE_NOTES.md << 'EOF'
+          # NEL Demo v${{ steps.get_version.outputs.version }}
+          
+          Named Entity Recognition and Linking demonstration application with standalone executables for Windows, macOS, and Linux.
+          
+          ## 📦 Downloads
+          
+          ### Windows
+          - **Installer**: `NEL_Demo_Setup_v${{ steps.get_version.outputs.version }}.exe` - Recommended for most users
+          - **Portable**: `NEL_Demo_Windows_v${{ steps.get_version.outputs.version }}.zip` - No installation required
+          
+          ### macOS
+          - **DMG**: `NEL_Demo_v${{ steps.get_version.outputs.version }}.dmg` - Drag to Applications folder
+          - **ZIP**: `NEL_Demo_macOS_v${{ steps.get_version.outputs.version }}.zip` - Alternative format
+          
+          ### Linux
+          - **AppImage**: `NEL_Demo-v${{ steps.get_version.outputs.version }}-x86_64.AppImage` - Universal Linux package
+          - **Tarball**: `NEL_Demo_Linux_v${{ steps.get_version.outputs.version }}.tar.gz` - Manual installation
+          
+          ## 🚀 Installation
+          
+          ### Windows
+          1. Download the installer (`NEL_Demo_Setup_v${{ steps.get_version.outputs.version }}.exe`)
+          2. Run the installer and follow the prompts
+          3. Launch from Start Menu or Desktop shortcut
+          
+          **OR** use the portable version:
+          1. Download and extract `NEL_Demo_Windows_v${{ steps.get_version.outputs.version }}.zip`
+          2. Run `Launch_NEL_Demo.bat` or navigate to `NEL_Demo` folder and run `NEL_Demo.exe`
+          
+          ### macOS
+          1. Download the DMG file
+          2. Open it and drag NEL Demo to the Applications folder
+          3. Launch from Applications (you may need to right-click and select "Open" the first time)
+          
+          ### Linux
+          1. Download the AppImage file
+          2. Make it executable: `chmod +x NEL_Demo-v${{ steps.get_version.outputs.version }}-x86_64.AppImage`
+          3. Run it: `./NEL_Demo-v${{ steps.get_version.outputs.version }}-x86_64.AppImage`
+          
+          ## ✨ Features
+          
+          - Named Entity Recognition (NER) using spaCy models
+          - Named Entity Linking (NEL) with Wikidata
+          - Simple and intuitive GUI
+          - Cyrillic transliteration support
+          - Smart text chunking for large documents
+          - HTML visualization with displaCy
+          - No Python installation required!
+          
+          ## 📋 System Requirements
+          
+          - **Windows**: Windows 10 or later (64-bit)
+          - **macOS**: macOS 10.13 (High Sierra) or later
+          - **Linux**: Most modern distributions (Ubuntu 18.04+, Fedora 30+, etc.)
+          - **RAM**: Minimum 4 GB recommended
+          - **Disk Space**: 200-500 MB depending on platform
+          
+          ## 🔒 Security
+          
+          SHA256 checksums for all files are provided in `SHA256SUMS.txt`. Verify downloads with:
+          
+          ```bash
+          # Linux/macOS
+          sha256sum -c SHA256SUMS.txt
+          
+          # Windows PowerShell
+          Get-FileHash <filename> -Algorithm SHA256
+          ```
+          
+          ## 📝 Changelog
+          
+          See [CHANGELOG.md](https://github.com/te-sla/NEL_Demo/blob/main/CHANGELOG.md) for detailed changes.
+          
+          ## 🐛 Issues & Support
+          
+          Report issues at: https://github.com/te-sla/NEL_Demo/issues
+          
+          ---
+          
+          Made by [TESLA](https://tesla.rgf.bg.ac.rs/) and [Jerteh](https://jerteh.rs/)
+          EOF
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag }}
+          name: NEL Demo v${{ steps.get_version.outputs.version }}
+          body_path: release/RELEASE_NOTES.md
+          draft: false
+          prerelease: false
+          files: |
+            release/NEL_Demo_Setup*.exe
+            release/NEL_Demo_Windows*.zip
+            release/NEL_Demo*.dmg
+            release/NEL_Demo_macOS*.zip
+            release/NEL_Demo*.AppImage
+            release/NEL_Demo_Linux*.tar.gz
+            release/SHA256SUMS.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
