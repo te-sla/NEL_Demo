@@ -1,0 +1,58 @@
+# PyInstaller module exclusion list for NEL Demo
+# These modules are not needed for the application and can be excluded to reduce size
+
+# Data science and visualization
+matplotlib
+seaborn
+plotly
+bokeh
+altair
+
+# IPython and Jupyter
+IPython
+ipython
+notebook
+jupyter
+jupyter_client
+jupyter_core
+jupyterlab
+ipykernel
+ipywidgets
+
+# Large data processing libraries (if not needed by spaCy)
+pandas
+numpy.testing
+scipy
+
+# Image processing (if not used)
+PIL
+Pillow
+opencv
+cv2
+
+# Testing frameworks
+pytest
+pytest-cov
+unittest
+nose
+tox
+
+# Documentation tools
+sphinx
+sphinx_rtd_theme
+
+# Development tools
+setuptools
+pip
+wheel
+black
+flake8
+pylint
+mypy
+
+# Other unused modules
+sqlalchemy
+requests
+urllib3
+certifi
+chardet
